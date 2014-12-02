@@ -1,5 +1,3 @@
-# encoding: UTF-8
-
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
   s.version = '1.7.0'
@@ -11,9 +9,9 @@ Gem::Specification.new do |s|
     This is just a fork of vmg's lib with a small patch we need.
   EOF
   s.email = 'shajith@zendesk.com'
-  s.homepage = 'http://github.com/shajith/rinku'
+  s.homepage = 'https://github.com/zendesk/rinku'
   s.authors = ["Vicent Marti", "Shajith Chacko"]
-  # = MANIFEST =
+  s.license = "ISC"
   s.files = %w[
     COPYING
     README.markdown
@@ -28,11 +26,8 @@ Gem::Specification.new do |s|
     lib/rinku.rb
     lib/rails_rinku.rb
     rinku.gemspec
-    test/autolink_test.rb
   ]
-  # = MANIFEST =
-  s.test_files = ["test/autolink_test.rb"]
-  s.extra_rdoc_files = ["COPYING"]
   s.extensions = ["ext/rinku/extconf.rb"]
-  s.require_paths = ["lib"]
+  s.add_development_dependency "rake"
+  s.add_development_dependency "rake-compiler"
 end
