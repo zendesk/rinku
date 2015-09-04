@@ -133,6 +133,26 @@ autolink_delim(uint8_t *data, size_t link_end, size_t offset, size_t size)
 }
 
 static size_t
+autolink_delim_iter(uint8_t *data, size_t link_end, size_t offset, size_t size)
+{
+	size_t next_link_end;
+        int iterations = 0;
+	link_end = autolink_delim(data, link_end, offset, size);
+
+        while(link_end != 0) {
+          next_link_end = autolink_delim(data, link_end, offset, size);
+          if (next_link_end == link_end || iterations > 5) {
+            break;
+          }
+          link_end = next_link_end;
+          iterations++;
+        }
+
+        return link_end;
+}
+
+
+static size_t
 check_domain(uint8_t *data, size_t size, int allow_short)
 {
 	size_t i, np = 0;
@@ -183,7 +203,7 @@ sd_autolink__www(
 	while (link_end < size && !isspace(data[link_end]))
 		link_end++;
 
-	link_end = autolink_delim(data, link_end, offset, size);
+        link_end = autolink_delim_iter(data, link_end, offset, size);
 
 	if (link_end == 0)
 		return 0;
@@ -238,7 +258,7 @@ sd_autolink__email(
 	if (link_end < 2 || nb != 1 || np == 0)
 		return 0;
 
-	link_end = autolink_delim(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, offset, size);
 
 	if (link_end == 0)
 		return 0;
@@ -283,7 +303,7 @@ sd_autolink__url(
 	while (link_end < size && !isspace(data[link_end]))
 		link_end++;
 
-	link_end = autolink_delim(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, offset, size);
 
 	if (link_end == 0)
 		return 0;
@@ -293,4 +313,3 @@ sd_autolink__url(
 
 	return link_end;
 }
-

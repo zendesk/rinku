@@ -278,6 +278,16 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     assert_linked '<a href="http://www.rubyonrails.com">Ruby On Rails</a>', '<a href="http://www.rubyonrails.com">Ruby On Rails</a>'
   end
 
+  def test_urls_with_entities_and_parens
+    assert_linked "&lt;<a href=\"http://www.google.com\">http://www.google.com</a>&gt;", "&lt;http://www.google.com&gt;"
+
+    assert_linked "&lt;<a href=\"http://www.google.com\">http://www.google.com</a>&gt;)", "&lt;http://www.google.com&gt;)"
+
+    #this produces invalid output, but limits how much work we will do
+    assert_linked "&lt;<a href=\"http://www.google.com&gt;\">http://www.google.com&gt;</a>)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)", "&lt;http://www.google.com&gt;)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)"
+
+  end
+
   if "".respond_to?(:force_encoding)
     def test_copies_source_encoding
       str = "http://www.bash.org"
