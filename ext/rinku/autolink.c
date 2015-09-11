@@ -280,7 +280,7 @@ sd_autolink__url(
 		return 0;
 
 	link_end += domain_len;
-	while (link_end < size && !isspace(data[link_end]))
+	while (link_end < size && !isUnicodeSpace(data, link_end, size))
 		link_end++;
 
 	link_end = autolink_delim(data, link_end, offset, size);
@@ -292,5 +292,30 @@ sd_autolink__url(
 	*rewind_p = rewind;
 
 	return link_end;
+}
+
+int
+isUnicodeSpace(uint8_t *data, size_t offset, size_t size) {
+	
+	static const int nbspCharCount = 3;
+	static const unsigned char narrowNBSP[] = {
+		0xE2, 0x80, 0xAF
+	};
+
+	// Check for ASCII spaces
+	if(isspace(data[offset])){
+		return 1;
+	}
+
+	// Check for narrow NBSP
+	int i;
+	for (i = 0; i < nbspCharCount; ++i)
+	{
+		if(data[offset + i] != narrowNBSP[i]){
+			return 0;
+		}
+	}
+
+	return 1; 
 }
 
