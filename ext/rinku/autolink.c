@@ -300,7 +300,7 @@ sd_autolink__url(
 		return 0;
 
 	link_end += domain_len;
-	while (link_end < size && !isUnicodeSpace(data, link_end, size)))
+	while (link_end < size && !isUnicodeSpace(data, link_end))
 		link_end++;
 
 	link_end = autolink_delim_iter(data, link_end, offset, size);
@@ -315,26 +315,38 @@ sd_autolink__url(
 }
 
 int
-isUnicodeSpace(uint8_t *data, size_t offset, size_t size) {
-	
-	static const int nbspCharCount = 3;
-	static const unsigned char narrowNBSP[] = {
-		0xE2, 0x80, 0xAF
-	};
+isUnicodeSpace(uint8_t *data, size_t offset) {
+	// Unicode Whitespace list from https://en.wikipedia.org/wiki/Whitespace_character#Unicode
 
-	// Check for ASCII spaces
-	if(isspace(data[offset])){
+	size_t i, spaceFound;
+	static char *spaces[] = {
+		"\u2000",
+		"\u2001",
+		"\u2002",
+		"\u2003",
+		"\u2004",
+		"\u2005",
+		"\u2006",
+		"\u2007",
+		"\u2008",
+		"\u2009", 
+		"\u200A",
+		"\u200B",
+		"\u200C",
+		"\u2028",
+		"\u2029",
+		"\u202F", //narrow non-breaking space
+		"\u205F",
+		"\u3000",
+		"\uFEFF"
+	};
+	if(isspace(data[offset])) {
 		return 1;
 	}
-
-	// Check for narrow NBSP
-	int i;
-	for (i = 0; i < nbspCharCount; ++i)
-	{
-		if(data[offset + i] != narrowNBSP[i]){
-			return 0;
+	for (i = 0; i < sizeof(spaces) / sizeof(spaces[0]); ++i) {
+		if(strncmp((char*)data + offset, spaces[i], sizeof(spaces[i]) - 1) == 0) {
+			return 1;
 		}
 	}
-
-	return 1; 
+	return 0;
 }
