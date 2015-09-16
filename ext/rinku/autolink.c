@@ -296,17 +296,35 @@ sd_autolink__url(
 
 int
 isUnicodeSpace(uint8_t *data, size_t offset) {
+	// Unicode Whitespace list from https://en.wikipedia.org/wiki/Whitespace_character#Unicode
 
 	size_t i, spaceFound;
 	static char *spaces[] = {
-		"\u202F",				//narrow non-breaking space
-		"\u202F"
+		"\u2000",
+		"\u2001",
+		"\u2002",
+		"\u2003",
+		"\u2004",
+		"\u2005",
+		"\u2006",
+		"\u2007",
+		"\u2008",
+		"\u2009", 
+		"\u200A",
+		"\u200B",
+		"\u200C",
+		"\u2028",
+		"\u2029",
+		"\u202F", //narrow non-breaking space
+		"\u205F",
+		"\u3000",
+		"\uFEFF"
 	};
 	if(isspace(data[offset])) {
 		return 1;
 	}
-	for (i = 0; i < sizeof(spaces); ++i) {
-		if(strncmp((char*)data + offset, spaces[0], sizeof(spaces[0]) - 1) == 0) {
+	for (i = 0; i < sizeof(spaces) / sizeof(spaces[0]); ++i) {
+		if(strncmp((char*)data + offset, spaces[i], sizeof(spaces[i]) - 1) == 0) {
 			return 1;
 		}
 	}
