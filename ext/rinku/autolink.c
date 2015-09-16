@@ -295,27 +295,22 @@ sd_autolink__url(
 }
 
 int
-isUnicodeSpace(uint8_t *data, size_t offset, size_t size) {
-	
-	static const int nbspCharCount = 3;
-	static const unsigned char narrowNBSP[] = {
-		0xE2, 0x80, 0xAF
-	};
+isUnicodeSpace(uint8_t *data, size_t offset) {
 
-	// Check for ASCII spaces
-	if(isspace(data[offset])){
+	size_t i, spaceFound;
+	static char *spaces[] = {
+		"\u202F",				//narrow non-breaking space
+		"\u202F"
+	};
+	if(isspace(data[offset])) {
 		return 1;
 	}
-
-	// Check for narrow NBSP
-	int i;
-	for (i = 0; i < nbspCharCount; ++i)
-	{
-		if(data[offset + i] != narrowNBSP[i]){
-			return 0;
+	for (i = 0; i < sizeof(spaces); ++i) {
+		if(strncmp((char*)data + offset, spaces[0], sizeof(spaces[0]) - 1) == 0) {
+			return 1;
 		}
 	}
-
-	return 1; 
+	return 0;
 }
+
 
