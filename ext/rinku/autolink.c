@@ -160,15 +160,19 @@ check_domain(uint8_t *data, size_t size, int allow_short)
 {
 	size_t i, np = 0;
 
-	if (!isalnum(data[0]))
-		return 0;
+	if (data[0] == '.' || data[0] == '-') return 0;
 
-	for (i = 1; i < size - 1; ++i) {
-		if (data[i] == '.') np++;
-		else if (!isalnum(data[i]) && data[i] != '-') break;
+	for (i = 0; i < size - 1; i++) {
+		if (data[i] == '.') {
+			np++;
+		} else if ((data[i] >= 'a' && data[i] <= 'z')
+			|| (data[i] >= 'A' && data[i] <= 'Z')
+			|| (data[i] >= '0' && data[i] <= '9')
+			|| (data[i] == '-')) {
+		} else {
+			break;
+		}
 	}
-	/* fake a "peek" lookahead */
-	i--;
 
 	if (allow_short) {
 		/* We don't need a valid domain in the strict sense (with
@@ -202,11 +206,19 @@ sd_autolink__www(
 
 	link_end = check_domain(data, size, 0);
 
-	if (link_end == 0)
+	if (link_end == 0) {
 		return 0;
-
-	while (link_end < size && !is_unicode_space(data, link_end))
-		link_end++;
+	} else if (data[link_end] > 127) {
+		if (!is_unicode_space(data, link_end)) {
+			/* we prevent linking a domain that contains unicode
+			 * in case of sneaky lookalike attacks */
+			return 0;
+		}
+	} else {
+		while (link_end < size && !is_unicode_space(data, link_end)) {
+			link_end++;
+		}
+	}
 
 	link_end = autolink_delim_iter(data, link_end, offset, size);
 
@@ -305,8 +317,14 @@ sd_autolink__url(
 		return 0;
 
 	link_end += domain_len;
-	while (link_end < size && !is_unicode_space(data, link_end))
-		link_end++;
+
+	if (data[link_end] > 127) {
+		if (!is_unicode_space(data, link_end)) { return 0; }
+	} else {
+		while (link_end < size && !is_unicode_space(data, link_end)) {
+			link_end++;
+		}
+	}
 
 	link_end = autolink_delim_iter(data, link_end, offset, size);
 
@@ -321,40 +339,37 @@ sd_autolink__url(
 
 int
 is_unicode_space(uint8_t *data, size_t offset) {
-	// Unicode Whitespace list from https://en.wikipedia.org/wiki/Whitespace_character#Unicode
-
-	size_t i, spaceFound;
-	static char *spaces[] = {
-		"\u2000",
-		"\u2001",
-		"\u2002",
-		"\u2003",
-		"\u2004",
-		"\u2005",
-		"\u2006",
-		"\u2007",
-		"\u2008",
-		"\u2009", 
-		"\u200A",
-		"\u200B",
-		"\u200C",
-		"\u2028",
-		"\u2029",
-		"\u202F", //narrow non-breaking space
-		"\u205F",
-		"\u3000",
-		"\uFEFF"
-	};
 
 	if(isspace(data[offset])) {
 		return 1;
 	}
 
-	int num_spaces = sizeof(spaces) / sizeof(spaces[0]);
-	for (i = 0; i < num_spaces; i++) {
-		if(strncmp((char*)data + offset, spaces[i], strlen(spaces[i])) == 0) {
-			return 1;
+	/* Unicode Whitespace list from https://en.wikipedia.org/wiki/Whitespace_character#Unicode */
+	if (data[offset] == 0xE2) {
+		if (data[offset+1] == 0x80) {
+			if (data[offset+2] >= 0x80 && data[offset+2] <= 0x8C) {
+				return 1;
+			} else if (data[offset+2] == 0xA8 || data[offset+2] == 0xA9 || data[offset+2] == 0xAF) {
+				return 1;
+			}
+		} else if (data[offset+1] == 0x81) {
+			if (data[offset+2] == 0x9F) {
+				return 1;
+			}
+		}
+	} else if (data[offset] == 0xE3) {
+		if (data[offset+1] == 0x80) {
+			if (data[offset+2] == 0x80) {
+				return 1;
+			}
+		}
+	} else if (data[offset] == 0xEF) {
+		if (data[offset+1] == 0xBB) {
+			if (data[offset+2] == 0xBF) {
+				return 1;
+			}
 		}
 	}
+
 	return 0;
 }

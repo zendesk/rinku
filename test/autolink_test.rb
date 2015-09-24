@@ -180,8 +180,26 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
   end
 
   def test_terminates_on_narrow_nbsp
-    assert_linked('This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a> ', 'This is just a test. http://www.pokemon.com ')
-    assert_linked('This is just a test. <a href="http://www.pokemon.com">www.pokemon.com</a> ', 'This is just a test. www.pokemon.com ')
+    spaces = ["\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005",
+              "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u200B",
+              "\u200C", "\u2028", "\u2029", "\u202F", "\u205F", "\u3000", "\uFEFF", "\x20"]
+
+    spaces.each do |space|
+      assert_linked("This is just a test. <a href=\"http://www.pokemon.com\">http://www.pokemon.com</a>#{space}", "This is just a test. http://www.pokemon.com#{space}")
+      assert_linked("This is just a test. <a href=\"http://www.pokemon.com/stuff\">http://www.pokemon.com/stuff</a>#{space}", "This is just a test. http://www.pokemon.com/stuff#{space}")
+      assert_linked("This is just a test. <a href=\"http://www.pokemon.com\">www.pokemon.com</a>#{space}", "This is just a test. www.pokemon.com#{space}")
+      assert_linked("This is just a test. <a href=\"http://www.pokemon.com/stuff\">www.pokemon.com/stuff</a>#{space}", "This is just a test. www.pokemon.com/stuff#{space}")
+    end
+  end
+
+  def test_does_not_autolink_unicode_urls
+    url = "http://examplе.com" # <- this contains a sneaky cyrillic e lookalike
+    assert_equal url, Rinku.auto_link(url)
+    assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
+
+    url = "www.examplе.com" # so does this
+    assert_equal url, Rinku.auto_link(url)
+    assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
   end
 
   def test_terminates_on_ampersand
