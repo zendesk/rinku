@@ -181,6 +181,7 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
 
   def test_terminates_on_narrow_nbsp
     assert_linked('This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a> ', 'This is just a test. http://www.pokemon.com ')
+    assert_linked('This is just a test. <a href="http://www.pokemon.com">www.pokemon.com</a> ', 'This is just a test. www.pokemon.com ')
   end
 
   def test_terminates_on_ampersand
