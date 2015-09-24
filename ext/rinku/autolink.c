@@ -27,6 +27,9 @@
 #endif
 
 int
+is_unicode_space(uint8_t *data, size_t offset);
+
+int
 sd_autolink_issafe(const uint8_t *link, size_t link_len)
 {
 	static const size_t valid_uris_count = 5;
@@ -136,19 +139,19 @@ static size_t
 autolink_delim_iter(uint8_t *data, size_t link_end, size_t offset, size_t size)
 {
 	size_t next_link_end;
-        int iterations = 0;
+	int iterations = 0;
 	link_end = autolink_delim(data, link_end, offset, size);
 
-        while(link_end != 0) {
-          next_link_end = autolink_delim(data, link_end, offset, size);
-          if (next_link_end == link_end || iterations > 5) {
-            break;
-          }
-          link_end = next_link_end;
-          iterations++;
-        }
+	while(link_end != 0) {
+		next_link_end = autolink_delim(data, link_end, offset, size);
+		if (next_link_end == link_end || iterations > 5) {
+			break;
+		}
+		link_end = next_link_end;
+		iterations++;
+	}
 
-        return link_end;
+	return link_end;
 }
 
 
@@ -164,6 +167,8 @@ check_domain(uint8_t *data, size_t size, int allow_short)
 		if (data[i] == '.') np++;
 		else if (!isalnum(data[i]) && data[i] != '-') break;
 	}
+	/* fake a "peek" lookahead */
+	i--;
 
 	if (allow_short) {
 		/* We don't need a valid domain in the strict sense (with
@@ -200,10 +205,10 @@ sd_autolink__www(
 	if (link_end == 0)
 		return 0;
 
-	while (link_end < size && !isspace(data[link_end]))
+	while (link_end < size && !is_unicode_space(data, link_end))
 		link_end++;
 
-        link_end = autolink_delim_iter(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, offset, size);
 
 	if (link_end == 0)
 		return 0;
@@ -300,7 +305,7 @@ sd_autolink__url(
 		return 0;
 
 	link_end += domain_len;
-	while (link_end < size && !isUnicodeSpace(data, link_end))
+	while (link_end < size && !is_unicode_space(data, link_end))
 		link_end++;
 
 	link_end = autolink_delim_iter(data, link_end, offset, size);
@@ -315,7 +320,7 @@ sd_autolink__url(
 }
 
 int
-isUnicodeSpace(uint8_t *data, size_t offset) {
+is_unicode_space(uint8_t *data, size_t offset) {
 	// Unicode Whitespace list from https://en.wikipedia.org/wiki/Whitespace_character#Unicode
 
 	size_t i, spaceFound;
@@ -340,11 +345,14 @@ isUnicodeSpace(uint8_t *data, size_t offset) {
 		"\u3000",
 		"\uFEFF"
 	};
+
 	if(isspace(data[offset])) {
 		return 1;
 	}
-	for (i = 0; i < sizeof(spaces) / sizeof(spaces[0]); ++i) {
-		if(strncmp((char*)data + offset, spaces[i], sizeof(spaces[i]) - 1) == 0) {
+
+	int num_spaces = sizeof(spaces) / sizeof(spaces[0]);
+	for (i = 0; i < num_spaces; i++) {
+		if(strncmp((char*)data + offset, spaces[i], strlen(spaces[i])) == 0) {
 			return 1;
 		}
 	}
