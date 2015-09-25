@@ -28,7 +28,7 @@ require 'rubygems'
 $spec = eval(File.read('rinku.gemspec'))
 
 def package(ext='')
-  "pkg/rinku-#{$spec.version}" + ext
+  "pkg/zendesk-rinku-#{$spec.version}" + ext
 end
 
 desc 'Build packages'
