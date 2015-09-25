@@ -1,3 +1,6 @@
+# Due to the absence of external maintenance
+# this is now a fully Zendesk owned/maintained gem
+
 Rinku does linking
 ==================
 
@@ -16,7 +19,7 @@ Rinku is available as a Ruby gem:
 
 The Rinku source is available at GitHub:
 
-    $ git clone git://github.com/vmg/rinku.git
+    $ git clone git://github.com/zendesk/rinku.git
 
 Rinku is a standalone library
 -----------------------------
@@ -95,13 +98,6 @@ require 'rails_rinku'
 
 The `rails_rinku` package monkeypatches Rails with an `auto_link` method that
 mimics 100% the original one, parameter per parameter. It's just faster.
-
-Rinku is written by me
-----------------------
-
-I am Vicent Marti, and I wrote Rinku.
-While Rinku is busy doing autolinks, you should be busy following me on twitter.
-[`@vmg`](http://twitter.com/vmg). Do it.
 
 Rinku has an awesome license
 ----------------------------

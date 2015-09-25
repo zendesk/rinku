@@ -1,16 +1,16 @@
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
-  s.version = '1.7.2'
+  s.version = '1.7.3'
   s.summary = "Mostly autolinking"
   s.description = <<-EOF
     A fast and very smart autolinking library that
     acts as a drop-in replacement for Rails `auto_link`
 
-    This is just a fork of vmg's lib with a small patch we need.
+    This is now a significant departure from the base gem.
   EOF
   s.email = 'shajith@zendesk.com'
   s.homepage = 'https://github.com/zendesk/rinku'
-  s.authors = ["Vicent Marti", "Shajith Chacko"]
+  s.authors = ["Shajith Chacko", "Jonathan Cheatham", "Matt Barker"]
   s.license = "ISC"
   s.files = %w[
     COPYING
@@ -27,7 +27,9 @@ Gem::Specification.new do |s|
     lib/rails_rinku.rb
     rinku.gemspec
   ]
+  s.metadata['allowed_push_host'] = "https://gem.zdsys.com/gems/"
   s.extensions = ["ext/rinku/extconf.rb"]
   s.add_development_dependency "rake"
   s.add_development_dependency "rake-compiler"
+  s.add_development_dependency "private_gem"
 end

@@ -1,6 +1,7 @@
 require 'date'
 require 'rake/clean'
 require 'rake/extensiontask'
+require 'private_gem/tasks'
 require 'digest/md5'
 
 task :default => :test
@@ -28,7 +29,7 @@ require 'rubygems'
 $spec = eval(File.read('rinku.gemspec'))
 
 def package(ext='')
-  "pkg/rinku-#{$spec.version}" + ext
+  "pkg/zendesk-rinku-#{$spec.version}" + ext
 end
 
 desc 'Build packages'
