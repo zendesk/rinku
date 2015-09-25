@@ -20,7 +20,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "ruby.h"
+
+#ifdef HAVE_RUBY_ENCODING_H
+#include <ruby/encoding.h>
+#define isalnum(s) rb_isalnum(s)
+#define isspace(s) rb_isspace(s)
+#define isalpha(s) rb_isalpha(s)
+#define ispunct(s) rb_ispunct(s)
+#else
 #include <ctype.h>
+#endif
+
 
 #if defined(_WIN32)
 #define strncasecmp	_strnicmp
@@ -52,7 +63,7 @@ sd_autolink_issafe(const uint8_t *link, size_t link_len)
 }
 
 static size_t
-autolink_delim(uint8_t *data, size_t link_end, size_t offset, size_t size)
+autolink_delim(uint8_t *data, size_t link_end, size_t max_rewind, size_t size)
 {
 	uint8_t cclose, copen = 0;
 	size_t i;
@@ -192,13 +203,13 @@ sd_autolink__www(
 	size_t *rewind_p,
 	struct buf *link,
 	uint8_t *data,
-	size_t offset,
+	size_t max_rewind,
 	size_t size,
 	unsigned int flags)
 {
 	size_t link_end;
 
-	if (offset > 0 && !ispunct(data[-1]) && !isspace(data[-1]))
+	if (max_rewind > 0 && !ispunct(data[-1]) && !isspace(data[-1]))
 		return 0;
 
 	if (size < 4 || memcmp(data, "www.", strlen("www.")) != 0)
@@ -220,10 +231,9 @@ sd_autolink__www(
 		}
 	}
 
-	link_end = autolink_delim_iter(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, max_rewind, size);
 
-	if (link_end == 0)
-		return 0;
+	if (link_end == 0) { return 0; }
 
 	bufput(link, data, link_end);
 	*rewind_p = 0;
@@ -236,14 +246,14 @@ sd_autolink__email(
 	size_t *rewind_p,
 	struct buf *link,
 	uint8_t *data,
-	size_t offset,
+	size_t max_rewind,
 	size_t size,
 	unsigned int flags)
 {
 	size_t link_end, rewind;
 	int nb = 0, np = 0;
 
-	for (rewind = 0; rewind < offset; ++rewind) {
+	for (rewind = 0; rewind < max_rewind; ++rewind) {
 		uint8_t c = data[-rewind - 1];
 
 		if (isalnum(c))
@@ -275,7 +285,7 @@ sd_autolink__email(
 	if (link_end < 2 || nb != 1 || np == 0)
 		return 0;
 
-	link_end = autolink_delim_iter(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, max_rewind, size);
 
 	if (link_end == 0)
 		return 0;
@@ -291,7 +301,7 @@ sd_autolink__url(
 	size_t *rewind_p,
 	struct buf *link,
 	uint8_t *data,
-	size_t offset,
+	size_t max_rewind,
 	size_t size,
 	unsigned int flags)
 {
@@ -300,7 +310,7 @@ sd_autolink__url(
 	if (size < 4 || data[1] != '/' || data[2] != '/')
 		return 0;
 
-	while (rewind < offset && isalpha(data[-rewind - 1]))
+	while (rewind < max_rewind && isalpha(data[-rewind - 1]))
 		rewind++;
 
 	if (!sd_autolink_issafe(data - rewind, size + rewind))
@@ -326,7 +336,7 @@ sd_autolink__url(
 		}
 	}
 
-	link_end = autolink_delim_iter(data, link_end, offset, size);
+	link_end = autolink_delim_iter(data, link_end, max_rewind, size);
 
 	if (link_end == 0)
 		return 0;

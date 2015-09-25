@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
-  s.version = '1.7.0'
+  s.version = '1.7.2'
   s.summary = "Mostly autolinking"
   s.description = <<-EOF
     A fast and very smart autolinking library that

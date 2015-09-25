@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    zendesk-rinku (1.7.0)
+    zendesk-rinku (1.7.2)
 
 GEM
   remote: https://rubygems.org/
@@ -17,3 +17,6 @@ DEPENDENCIES
   rake
   rake-compiler
   zendesk-rinku!
+
+BUNDLED WITH
+   1.10.6

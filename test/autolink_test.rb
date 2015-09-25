@@ -15,6 +15,10 @@ class RedcarpetAutolinkTest < Test::Unit::TestCase
     assert_equal expected, Rinku.auto_link(url)
   end
 
+  def test_segfault
+    Rinku.auto_link("a+b@d.com+e@f.com", mode=:all)
+  end
+
   def test_escapes_quotes
     assert_linked %(<a href="http://website.com/&quot;onmouseover=document.body.style.backgroundColor=&quot;pink&quot;;//">http://website.com/"onmouseover=document.body.style.backgroundColor="pink";//</a>),
       %(http://website.com/"onmouseover=document.body.style.backgroundColor="pink";//)
@@ -147,6 +151,12 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     end
 
     assert_equal link, "Find ur favorite pokeman @ <a href=\"http://www.pokemon.com\">POKEMAN WEBSITE</a>"
+  end
+
+  def test_links_with_cyrillic_x
+    url = "http://example.com/х"
+
+    assert_linked "<a href=\"#{url}\">#{url}</a>", url
   end
 
   def test_autolink_works
@@ -323,6 +333,19 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
       ret = Rinku.auto_link str
       assert_equal str.encoding, ret.encoding
     end
+
+    def test_block_encoding
+      url = "http://example.com/х"
+      assert_equal "UTF-8", url.encoding.to_s
+
+      link = Rinku.auto_link(url) do |u|
+        assert_equal "UTF-8", u.encoding.to_s
+        u
+      end
+
+      assert_equal link.encoding.to_s, "UTF-8"
+    end
+
   end
 
   def generate_result(link_text, href = nil)
