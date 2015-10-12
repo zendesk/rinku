@@ -51,7 +51,7 @@ typedef enum {
 } autolink_mode;
 
 typedef size_t (*autolink_parse_cb)(
-	size_t *rewind, struct buf *, uint8_t *, size_t, size_t, unsigned int);
+	size_t *rewind, struct buf *, uint8_t *, size_t, size_t, unsigned int, unsigned int);
 
 typedef enum {
 	AUTOLINK_ACTION_NONE = 0,
@@ -191,6 +191,7 @@ rinku_autolink(
 	size_t size,
 	autolink_mode mode,
 	unsigned int flags,
+  unsigned int ascii,
 	const char *link_attr,
 	const char **skip_tags,
 	void (*link_text_cb)(struct buf *ob, const struct buf *link, void *payload, int enc_index),
@@ -256,7 +257,8 @@ rinku_autolink(
 		link_end = g_callbacks[(int)action](
 			&rewind, link, (uint8_t *)text + end,
 			end - last_link_found,
-			size - end, flags);
+			//size - end, flags, ascii);
+			size - end, flags, 0);
 
 		/* print the link */
 		if (link_end > 0) {
@@ -327,8 +329,8 @@ const char **rinku_load_tags(VALUE rb_skip)
  * Document-method: auto_link
  *
  * call-seq:
- *  auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0)
- *  auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0) { |link_text| ... }
+ *  auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0, ascii_only=0)
+ *  auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0, ascii_only=0) { |link_text| ... }
  *
  * Parses a block of text looking for "safe" urls or email addresses,
  * and turns them into HTML links with the given attributes.
@@ -374,6 +376,10 @@ const char **rinku_load_tags(VALUE rb_skip)
  * -   `flag` is an optional boolean value specifying whether to recognize
  * 'http://foo' as a valid domain, or require at least one '.'. It defaults to false.
  *
+ * -   `ascii_only` is an optional boolean value specifying whether to recognize
+ * 'http://examplе.com' (contains a cyrillic e lookalike) as a valid domain, or allow only
+ * ascii characters. It defaults to false.
+ *
  * -   `&block` is an optional block argument. If a block is passed, it will
  * be yielded for each found link in the text, and its return value will be used instead
  * of the name of the link. E.g.
@@ -390,16 +396,17 @@ rb_rinku_autolink(int argc, VALUE *argv, VALUE self)
 {
 	static const char *SKIP_TAGS[] = {"a", "pre", "code", "kbd", "script", NULL};
 
-	VALUE result, rb_text, rb_mode, rb_html, rb_skip, rb_flags, rb_block;
+	VALUE result, rb_text, rb_mode, rb_html, rb_skip, rb_flags, rb_ascii, rb_block;
 	struct buf *output_buf;
 	int link_mode, count;
 	unsigned int link_flags = 0;
+	unsigned int link_ascii = 0;
 	const char *link_attr = NULL;
 	const char **skip_tags = NULL;
 	ID mode_sym;
 
 	rb_scan_args(argc, argv, "14&", &rb_text, &rb_mode,
-		&rb_html, &rb_skip, &rb_flags, &rb_block);
+		&rb_html, &rb_skip, &rb_flags, &rb_ascii, &rb_block);
 
 	Check_Type(rb_text, T_STRING);
 
@@ -429,6 +436,11 @@ rb_rinku_autolink(int argc, VALUE *argv, VALUE self)
 		link_flags = FIX2INT(rb_flags);
 	}
 
+	if (!NIL_P(rb_ascii)) {
+		Check_Type(rb_ascii, T_FIXNUM);
+		link_ascii = FIX2INT(rb_ascii);
+	}
+
 	output_buf = bufnew(32);
 
 	if (mode_sym == rb_intern("all"))
@@ -448,6 +460,7 @@ rb_rinku_autolink(int argc, VALUE *argv, VALUE self)
 		RSTRING_LEN(rb_text),
 		link_mode,
 		link_flags,
+    link_ascii,
 		link_attr,
 		skip_tags,
 		RTEST(rb_block) ? &autolink_callback : NULL,
@@ -473,4 +486,5 @@ void RUBY_EXPORT Init_rinku()
 	rb_mRinku = rb_define_module("Rinku");
 	rb_define_method(rb_mRinku, "auto_link", rb_rinku_autolink, -1);
 	rb_define_const(rb_mRinku, "AUTOLINK_SHORT_DOMAINS", INT2FIX(SD_AUTOLINK_SHORT_DOMAINS));
+	rb_define_const(rb_mRinku, "AUTOLINK_ASCII_ONLY", INT2FIX(SD_AUTOLINK_ASCII_ONLY));
 }

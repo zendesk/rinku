@@ -204,12 +204,12 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
 
   def test_does_not_autolink_unicode_urls
     url = "http://examplе.com" # <- this contains a sneaky cyrillic e lookalike
-    assert_equal url, Rinku.auto_link(url)
-    assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
+    assert_equal url, Rinku.auto_link(url, mode=:all, ascii_only=Rinku::AUTOLINK_ASCII_ONLY)
+    assert_equal url, Rinku.auto_link(url, :all, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS, Rinku::AUTOLINK_ASCII_ONLY)
 
     url = "www.examplе.com" # so does this
-    assert_equal url, Rinku.auto_link(url)
-    assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
+    assert_equal url, Rinku.auto_link(url, mode=:all, ascii_only=Rinku::AUTOLINK_ASCII_ONLY)
+    assert_equal url, Rinku.auto_link(url, :all, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS, Rinku::AUTOLINK_ASCII_ONLY)
   end
 
   def test_terminates_on_ampersand
