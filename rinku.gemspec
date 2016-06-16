@@ -27,9 +27,7 @@ Gem::Specification.new do |s|
     lib/rails_rinku.rb
     rinku.gemspec
   ]
-  s.metadata['allowed_push_host'] = "https://gem.zdsys.com/gems/"
   s.extensions = ["ext/rinku/extconf.rb"]
   s.add_development_dependency "rake"
   s.add_development_dependency "rake-compiler"
-  s.add_development_dependency "private_gem"
 end

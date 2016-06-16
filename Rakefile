@@ -1,7 +1,7 @@
 require 'date'
 require 'rake/clean'
 require 'rake/extensiontask'
-require 'private_gem/tasks'
+require 'bundler/gem_tasks'
 require 'digest/md5'
 
 task :default => :test
