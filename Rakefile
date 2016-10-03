@@ -1,7 +1,6 @@
 require 'date'
 require 'rake/clean'
 require 'rake/extensiontask'
-require 'bundler/gem_tasks'
 require 'digest/md5'
 
 task :default => :test
@@ -29,7 +28,7 @@ require 'rubygems'
 $spec = eval(File.read('rinku.gemspec'))
 
 def package(ext='')
-  "pkg/zendesk-rinku-#{$spec.version}" + ext
+  "pkg/rinku-#{$spec.version}" + ext
 end
 
 desc 'Build packages'
@@ -48,23 +47,4 @@ directory 'pkg/'
 file package('.gem') => %w[pkg/ rinku.gemspec] + $spec.files do |f|
   sh "gem build rinku.gemspec"
   mv File.basename(f.name), f.name
-end
-
-# GEMSPEC HELPERS ==========================================================
-task :gather => 'sundown:checkout' do |t|
-  files =
-    FileList[
-      'sundown/src/{buffer,autolink}.h',
-      'sundown/src/{buffer,autolink}.c',
-    ]
-  cp files, 'ext/rinku/',
-    :preserve => true,
-    :verbose => true
-end
-
-task 'sundown:checkout' do |t|
-  unless File.exists?('sundown/src/markdown.h')
-    sh 'git submodule init'
-    sh 'git submodule update'
-  end
 end
