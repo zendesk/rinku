@@ -1,4 +1,7 @@
 source "https://rubygems.org"
-source "https://gem.zdsys.com/gems/"
+
+gem "rake"
+gem "rake-compiler"
+gem "test-unit"
 
 gemspec
