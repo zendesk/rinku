@@ -6,20 +6,18 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    power_assert (1.1.5)
+    minitest (5.12.2)
     rake (13.0.0)
     rake-compiler (1.0.8)
       rake
-    test-unit (3.3.4)
-      power_assert
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  minitest
   rake
   rake-compiler
-  test-unit
   zendesk-rinku!
 
 BUNDLED WITH
