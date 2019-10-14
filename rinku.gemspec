@@ -28,6 +28,4 @@ Gem::Specification.new do |s|
     rinku.gemspec
   ]
   s.extensions = ["ext/rinku/extconf.rb"]
-  s.add_development_dependency "rake"
-  s.add_development_dependency "rake-compiler"
 end
