@@ -202,6 +202,14 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     end
   end
 
+  def test_terminates_non_breaking_space
+    space = "\u00A0"
+    assert_linked("This is just a test. <a href=\"http://www.pokemon.com\">http://www.pokemon.com</a>#{space}", "This is just a test. http://www.pokemon.com#{space}")
+    assert_linked("This is just a test. <a href=\"http://www.pokemon.com/stuff\">http://www.pokemon.com/stuff</a>#{space}", "This is just a test. http://www.pokemon.com/stuff#{space}")
+    assert_linked("This is just a test. <a href=\"http://www.pokemon.com\">www.pokemon.com</a>#{space}", "This is just a test. www.pokemon.com#{space}")
+    assert_linked("This is just a test. <a href=\"http://www.pokemon.com/stuff\">www.pokemon.com/stuff</a>#{space}", "This is just a test. www.pokemon.com/stuff#{space}")
+  end
+
   def test_does_not_autolink_unicode_urls
     url = "http://examplе.com" # <- this contains a sneaky cyrillic e lookalike
     assert_equal url, Rinku.auto_link(url)
