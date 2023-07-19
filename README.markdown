@@ -1,5 +1,6 @@
-# Due to the absence of external maintenance
-# this is now a fully Zendesk owned/maintained gem
+# Rinku
+
+Due to the absence of external maintenance, this is now a fully Zendesk owned/maintained gem.
 
 Rinku does linking
 ==================
@@ -10,7 +11,7 @@ just like the Ruby on Rails `auto_link` method -- but it's about 20 times faster
 because it's written in C, and it's about 20 times smarter when linking,
 because it does actual parsing instead of RegEx replacements.
 
-Rinku is a Ruby Gem 
+Rinku is a Ruby Gem
 -------------------
 
 Rinku is available as a Ruby gem:
@@ -56,8 +57,8 @@ the 'http://' protocol.
 HTML, Rinku is smart enough to skip the links that are already enclosed in `<a>`
 tags.`
 
--   `mode` is a symbol, either `:all`, `:urls` or `:email_addresses`, 
-which specifies which kind of links will be auto-linked. 
+-   `mode` is a symbol, either `:all`, `:urls` or `:email_addresses`,
+which specifies which kind of links will be auto-linked.
 
 -   `link_attr` is a string containing the link attributes for each link that
 will be generated. These attributes are not sanitized and will be include as-is

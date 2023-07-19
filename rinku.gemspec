@@ -1,6 +1,8 @@
+require_relative "lib/version"
+
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
-  s.version = '1.7.3'
+  s.version = Rinku::VERSION
   s.summary = "Mostly autolinking"
   s.description = <<-EOF
     A fast and very smart autolinking library that
@@ -28,4 +30,5 @@ Gem::Specification.new do |s|
     rinku.gemspec
   ]
   s.extensions = ["ext/rinku/extconf.rb"]
+  s.required_ruby_version = ">= 2.7"
 end

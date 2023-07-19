@@ -6,9 +6,9 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    minitest (5.12.2)
-    rake (13.0.0)
-    rake-compiler (1.0.8)
+    minitest (5.18.1)
+    rake (13.0.6)
+    rake-compiler (1.2.3)
       rake
 
 PLATFORMS
@@ -21,4 +21,4 @@ DEPENDENCIES
   zendesk-rinku!
 
 BUNDLED WITH
-   1.17.3
+   2.4.12
