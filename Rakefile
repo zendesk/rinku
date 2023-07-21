@@ -26,7 +26,7 @@ task 'test' => [:compile]
 # PACKAGING =================================================================
 
 require 'rubygems'
-$spec = eval(File.read('rinku.gemspec'))
+$spec = Bundler::GemHelper.gemspec
 
 def package(ext='')
   "pkg/zendesk-rinku-#{$spec.version}" + ext
