@@ -1,6 +1,7 @@
 require 'date'
 require 'rake/clean'
 require 'rake/extensiontask'
+require 'bundler/setup'
 require 'bundler/gem_tasks'
 require 'digest/md5'
 
