@@ -17,18 +17,26 @@ Gem::Specification.new do |s|
   s.files = %w[
     COPYING
     README.markdown
+    docs/rust-rewrite.md
+    docs/baseline.json
     Rakefile
-    ext/rinku/rinku.c
-    ext/rinku/rinku.h
-    ext/rinku/autolink.c
-    ext/rinku/autolink.h
-    ext/rinku/buffer.c
-    ext/rinku/buffer.h
+    Cargo.toml
+    Cargo.lock
+    crates/rinku-core/Cargo.toml
+    crates/rinku-core/src/lib.rs
+    crates/rinku-core/src/autolink.rs
+    crates/rinku-core/src/html.rs
+    crates/rinku-core/src/render.rs
+    crates/rinku-core/tests/core.rs
+    ext/rinku/Cargo.toml
+    ext/rinku/src/lib.rs
     ext/rinku/extconf.rb
     lib/rinku.rb
     lib/rails_rinku.rb
+    lib/version.rb
     rinku.gemspec
   ]
   s.extensions = ["ext/rinku/extconf.rb"]
-  s.required_ruby_version = ">= 2.7"
+  s.required_ruby_version = ">= 3.3"
+  s.add_dependency 'rb_sys', '= 0.9.130'
 end

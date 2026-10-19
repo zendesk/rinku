@@ -1,0 +1,14 @@
+[package]
+name = "rinku"
+version = "2.0.0-pre.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rinku-core = { path = "../../crates/rinku-core" }
+magnus = { version = "=0.9.3", default-features = false, features = ["rb-sys"] }
+rb-sys = { version = "=0.9.130", default-features = false, features = ["stable-api-compiled-fallback"] }

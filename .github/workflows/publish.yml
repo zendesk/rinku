@@ -1,10 +1,12 @@
 name: Publish to RubyGems.org
 
 on:
-  push:
-    branches: main
-    paths: lib/version.rb
   workflow_dispatch:
+    inputs:
+      qualification_evidence:
+        description: 'HTTPS URL to reviewed controlled performance and native-memory evidence'
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -14,12 +16,26 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    env:
+      QUALIFICATION_EVIDENCE: ${{ inputs.qualification_evidence }}
     steps:
       - uses: actions/checkout@v4
+      - name: Require release qualification evidence
+        run: ruby -ruri -e 'u = URI.parse(ENV.fetch("QUALIFICATION_EVIDENCE")); abort "HTTPS evidence URL required" unless u.scheme == "https" && u.host'
+      - uses: dtolnay/rust-toolchain@stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: '3.3'
           bundler-cache: false
       - name: Install dependencies
         run: bundle install
+      - name: Validate prerelease package
+        run: |
+          bundle exec rake test gc_stress
+          cargo test -p rinku-core --locked
+          ruby tools/package_smoke.rb
       - uses: rubygems/release-gem@v1

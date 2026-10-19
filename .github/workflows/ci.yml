@@ -3,24 +3,88 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
 jobs:
-  tests:
+  ruby:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        ruby-version:
-          - '2.7'
-          - '3.0'
-          - '3.1'
-          - '3.2'
-          - '3.3'
-          - '3.4'
+        ruby: ['3.3', '3.4', '4.0']
+    env:
+      RB_SYS_CARGO_PROFILE: release
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Native build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby-version }}
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - name: test ${{ matrix.ruby-version }}
-        run: bundle exec rake test
+      - run: bundle exec rake test gc_stress
+      - name: Pinned C differential comparison
+        run: |
+          ruby tools/build_baseline.rb "$RUNNER_TEMP/rinku-c"
+          ruby tools/differential.rb "$RUNNER_TEMP/rinku-c/lib:$RUNNER_TEMP/rinku-c/ext/rinku"
+      - name: Install and load the source gem outside the checkout
+        run: ruby tools/package_smoke.rb
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - run: sudo apt-get install -y libclang-dev
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test -p rinku-core --locked
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.85.0'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - run: sudo apt-get install -y libclang-dev
+      - run: cargo check --workspace --locked
+
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-10-01
+          components: miri
+      - run: cargo miri setup
+      - run: cargo miri test -p rinku-core --locked
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-10-01
+      - run: cargo install cargo-fuzz --version 0.13.2 --locked
+      - run: cargo fuzz run autolink -- -max_total_time=30 -max_len=16384
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzz-failures
+          path: fuzz/artifacts

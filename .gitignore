@@ -2,3 +2,15 @@ lib/rinku.bundle
 tmp/**/*
 tmp/*
 *.gem
+/target/
+/fuzz/target/
+/fuzz/artifacts/
+/fuzz/corpus/
+/ext/rinku/target/
+/ext/rinku/.rb-sys/
+/ext/rinku/Makefile
+/ext/rinku/mkmf.log
+/ext/rinku/rinku.bundle
+/ext/rinku/rinku.so
+/lib/rinku.so
+/pkg/

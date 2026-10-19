@@ -1,0 +1,506 @@
+{
+  "cases": [
+    {
+      "name": "benchmark/plain_text",
+      "c_ns": 367.0324510548336,
+      "rust_ns": 214.6689419408439,
+      "c_ns_ci95": [
+        364.76732660773735,
+        369.738868633714
+      ],
+      "rust_ns_ci95": [
+        205.2493365439447,
+        223.2802266747695
+      ],
+      "c_ops_per_second": 2724554.728406298,
+      "rust_ops_per_second": 4658335.718986164,
+      "ratio": 0.5848772808069033,
+      "ratio_ci95": [
+        0.5576370928270853,
+        0.6087223295971845
+      ],
+      "c_ruby_allocations": 0.0078125,
+      "rust_ruby_allocations": 0.0078125,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/punctuated_urls",
+      "c_ns": 804.9881309085156,
+      "rust_ns": 647.5785867548951,
+      "c_ns_ci95": [
+        796.6719401011127,
+        814.5568082022962
+      ],
+      "rust_ns_ci95": [
+        634.0006057255571,
+        659.3569036522
+      ],
+      "c_ops_per_second": 1242254.340907353,
+      "rust_ops_per_second": 1544214.1238967408,
+      "ratio": 0.8044573104749173,
+      "ratio_ci95": [
+        0.7898112131471587,
+        0.8170578497755534
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/short_domain_and_email",
+      "c_ns": 703.2592674958162,
+      "rust_ns": 624.104040148162,
+      "c_ns_ci95": [
+        696.205406883018,
+        710.6444615350731
+      ],
+      "rust_ns_ci95": [
+        603.9847625631428,
+        641.0976909236301
+      ],
+      "c_ops_per_second": 1421950.6890550137,
+      "rust_ops_per_second": 1602296.9499806482,
+      "ratio": 0.8874451699306968,
+      "ratio_ci95": [
+        0.8578394163498066,
+        0.9140028195331626
+      ],
+      "c_ruby_allocations": 2.0,
+      "rust_ruby_allocations": 2.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/existing_anchor_and_unlinked_url",
+      "c_ns": 709.7014125704073,
+      "rust_ns": 550.0714690443037,
+      "c_ns_ci95": [
+        704.9499121375021,
+        714.4421211293297
+      ],
+      "rust_ns_ci95": [
+        536.4825844478921,
+        562.0598315658207
+      ],
+      "c_ops_per_second": 1409043.2712796566,
+      "rust_ops_per_second": 1817945.587575018,
+      "ratio": 0.7750745021797921,
+      "ratio_ci95": [
+        0.755656007980007,
+        0.7926060913253803
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/skip_code_and_pre",
+      "c_ns": 792.1127736700589,
+      "rust_ns": 649.9669886775291,
+      "c_ns_ci95": [
+        787.0596939432547,
+        797.2458868740349
+      ],
+      "rust_ns_ci95": [
+        637.3600590056515,
+        660.8117860426589
+      ],
+      "c_ops_per_second": 1262446.501609546,
+      "rust_ops_per_second": 1538539.6757374925,
+      "ratio": 0.820548551017638,
+      "ratio_ci95": [
+        0.8021286249591857,
+        0.8354857473087149
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/escaped_angle_brackets",
+      "c_ns": 571.9603820280673,
+      "rust_ns": 492.9554683559133,
+      "c_ns_ci95": [
+        567.7729124919922,
+        576.917549047869
+      ],
+      "rust_ns_ci95": [
+        480.21511442940533,
+        503.85071525539155
+      ],
+      "c_ops_per_second": 1748372.8443816022,
+      "rust_ops_per_second": 2028580.8033231942,
+      "ratio": 0.8618699543628932,
+      "ratio_ci95": [
+        0.8376302617758244,
+        0.8827728864353845
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/balanced_parentheses_and_punctuation",
+      "c_ns": 910.9270514384074,
+      "rust_ns": 687.2568453632762,
+      "c_ns_ci95": [
+        904.0309617178234,
+        917.6970740732819
+      ],
+      "rust_ns_ci95": [
+        671.3812185750488,
+        700.307865021682
+      ],
+      "c_ops_per_second": 1097782.7460727412,
+      "rust_ops_per_second": 1455060.0794254895,
+      "ratio": 0.7544587069601866,
+      "ratio_ci95": [
+        0.7382684163548111,
+        0.7679929831363551
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/unicode_multiline_email",
+      "c_ns": 790.8783565754159,
+      "rust_ns": 669.4071956495242,
+      "c_ns_ci95": [
+        785.3980824184239,
+        797.4950214744002
+      ],
+      "rust_ns_ci95": [
+        651.9309970010231,
+        684.5933025736633
+      ],
+      "c_ops_per_second": 1264416.9507054184,
+      "rust_ops_per_second": 1493859.053949521,
+      "ratio": 0.8464098051034368,
+      "ratio_ci95": [
+        0.8204084323178861,
+        0.8694441232937096
+      ],
+      "c_ruby_allocations": 2.0,
+      "rust_ruby_allocations": 2.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/html_email_mixed_links",
+      "c_ns": 1471.4717150005922,
+      "rust_ns": 1239.3297175727587,
+      "c_ns_ci95": [
+        1450.6116603966739,
+        1492.537250181657
+      ],
+      "rust_ns_ci95": [
+        1215.0681907732185,
+        1263.7293392064012
+      ],
+      "c_ops_per_second": 679591.7242619899,
+      "rust_ops_per_second": 806887.7763687547,
+      "ratio": 0.842238219694396,
+      "ratio_ci95": [
+        0.8244688552108616,
+        0.859159557516848
+      ],
+      "c_ruby_allocations": 2.0,
+      "rust_ruby_allocations": 2.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/ticket_reference_is_not_a_link",
+      "c_ns": 714.1120227393393,
+      "rust_ns": 514.0041413359085,
+      "c_ns_ci95": [
+        708.1614534842403,
+        719.4426475133434
+      ],
+      "rust_ns_ci95": [
+        501.22675514010024,
+        526.4574236931578
+      ],
+      "c_ops_per_second": 1400340.518234089,
+      "rust_ops_per_second": 1945509.616714327,
+      "ratio": 0.719780825652794,
+      "ratio_ci95": [
+        0.7007394083805432,
+        0.7372986155230357
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "benchmark/long_mixed_email",
+      "c_ns": 2500.492603190249,
+      "rust_ns": 1760.5738406993803,
+      "c_ns_ci95": [
+        2453.950978928465,
+        2551.516029207298
+      ],
+      "rust_ns_ci95": [
+        1735.4645261839528,
+        1785.0439432719843
+      ],
+      "c_ops_per_second": 399921.1990166065,
+      "rust_ops_per_second": 567996.6252382543,
+      "ratio": 0.7040908013297681,
+      "ratio_ci95": [
+        0.6890546140931325,
+        0.7189857444215821
+      ],
+      "c_ruby_allocations": 2.0,
+      "rust_ruby_allocations": 2.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/http_https_ftp_urls",
+      "c_ns": 937.9418881017941,
+      "rust_ns": 685.4381713418048,
+      "c_ns_ci95": [
+        909.0741052943591,
+        972.4794313053086
+      ],
+      "rust_ns_ci95": [
+        672.5576389928129,
+        697.5270339151461
+      ],
+      "c_ops_per_second": 1066164.1330720382,
+      "rust_ops_per_second": 1458920.7922902997,
+      "ratio": 0.7307895937231185,
+      "ratio_ci95": [
+        0.6995894248783112,
+        0.7592140184440963
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+      "c_ns": 621.4412347207186,
+      "rust_ns": 507.30477776866667,
+      "c_ns_ci95": [
+        613.8431017049095,
+        629.9483597085488
+      ],
+      "rust_ns_ci95": [
+        493.5307877897169,
+        521.2160166449698
+      ],
+      "c_ops_per_second": 1609162.6112474,
+      "rust_ops_per_second": 1971201.6204507432,
+      "ratio": 0.8163358808925097,
+      "ratio_ci95": [
+        0.7952708690887672,
+        0.8386951710112553
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/email_address_is_not_linked",
+      "c_ns": 486.0296504406659,
+      "rust_ns": 380.675937545388,
+      "c_ns_ci95": [
+        477.243492424616,
+        495.57801944450324
+      ],
+      "rust_ns_ci95": [
+        370.9796346541499,
+        390.1510761573928
+      ],
+      "c_ops_per_second": 2057487.6431784262,
+      "rust_ops_per_second": 2626906.2511490365,
+      "ratio": 0.7832360375549982,
+      "ratio_ci95": [
+        0.7641386439416382,
+        0.8037152439644075
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+      "c_ns": 537.422536311814,
+      "rust_ns": 444.58068885976445,
+      "c_ns_ci95": [
+        529.4398907354852,
+        545.7632259889388
+      ],
+      "rust_ns_ci95": [
+        430.7202393878875,
+        459.8989235195173
+      ],
+      "c_ops_per_second": 1860733.2823493602,
+      "rust_ops_per_second": 2249310.4740215857,
+      "ratio": 0.8272460844511692,
+      "ratio_ci95": [
+        0.801638699492272,
+        0.8517250471325071
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/parenthesized_url_and_punctuation",
+      "c_ns": 537.4306486061018,
+      "rust_ns": 453.61341365385607,
+      "c_ns_ci95": [
+        530.0517077617502,
+        545.2140120885617
+      ],
+      "rust_ns_ci95": [
+        441.83212669158604,
+        467.3535756449735
+      ],
+      "c_ops_per_second": 1860705.1953468479,
+      "rust_ops_per_second": 2204520.346841157,
+      "ratio": 0.8440408354647488,
+      "ratio_ci95": [
+        0.821023242694001,
+        0.8654255356805564
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/unicode_text_node",
+      "c_ns": 455.4197942285484,
+      "rust_ns": 400.05211046071867,
+      "c_ns_ci95": [
+        447.7898945524401,
+        464.1337590467815
+      ],
+      "rust_ns_ci95": [
+        392.2563936477769,
+        407.44824540920706
+      ],
+      "c_ops_per_second": 2195776.320381364,
+      "rust_ops_per_second": 2499674.352044671,
+      "ratio": 0.8784249510682358,
+      "ratio_ci95": [
+        0.8531328418450999,
+        0.9002544739335732
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "mail_benchmark/long_mixed_email_text_node",
+      "c_ns": 1550.5102515236663,
+      "rust_ns": 1063.9340656188115,
+      "c_ns_ci95": [
+        1528.5351493124424,
+        1573.9486358444028
+      ],
+      "rust_ns_ci95": [
+        1050.1037130645554,
+        1078.288524506534
+      ],
+      "c_ops_per_second": 644948.9766464381,
+      "rust_ops_per_second": 939907.8686500881,
+      "ratio": 0.6861831868401368,
+      "ratio_ci95": [
+        0.6734671160991658,
+        0.698715018295646
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "supplemental/no_links",
+      "c_ns": 5412.044247657017,
+      "rust_ns": 926.8028909950191,
+      "c_ns_ci95": [
+        5381.88117860068,
+        5443.104553228557
+      ],
+      "rust_ns_ci95": [
+        919.608017221445,
+        933.961995775899
+      ],
+      "c_ops_per_second": 184773.06434309366,
+      "rust_ops_per_second": 1078978.0758305537,
+      "ratio": 0.17124821021118788,
+      "ratio_ci95": [
+        0.16940367465769654,
+        0.173220508318414
+      ],
+      "c_ruby_allocations": 0.0,
+      "rust_ruby_allocations": 0.0,
+      "gate": "pass"
+    },
+    {
+      "name": "supplemental/large_input",
+      "c_ns": 855158.9465467572,
+      "rust_ns": 601815.2595397476,
+      "c_ns_ci95": [
+        847595.3389372677,
+        863042.1220338657
+      ],
+      "rust_ns_ci95": [
+        597083.0924399131,
+        607315.1562886941
+      ],
+      "c_ops_per_second": 1169.373253987612,
+      "rust_ops_per_second": 1661.639488444965,
+      "ratio": 0.703746668347394,
+      "ratio_ci95": [
+        0.6994436923538934,
+        0.7085797910770781
+      ],
+      "c_ruby_allocations": 1.0,
+      "rust_ruby_allocations": 1.0,
+      "gate": "pass"
+    },
+    {
+      "name": "supplemental/callbacks",
+      "c_ns": 17579.95317665791,
+      "rust_ns": 19234.37751499196,
+      "c_ns_ci95": [
+        17347.476678264145,
+        17830.777209503947
+      ],
+      "rust_ns_ci95": [
+        18864.175850674113,
+        19641.37323333075
+      ],
+      "c_ops_per_second": 56882.9728925426,
+      "rust_ops_per_second": 51990.2450297944,
+      "ratio": 1.0941085747902186,
+      "ratio_ci95": [
+        1.0741840214555558,
+        1.1155316071360994
+      ],
+      "c_ruby_allocations": 131.0,
+      "rust_ruby_allocations": 131.0,
+      "gate": "regression"
+    }
+  ],
+  "aggregates": {
+    "benchmark": {
+      "geometric_mean_ratio": 0.7770728040811109,
+      "definition": "Equal weight per case; geometric mean of Rust/C time ratios. Not a release gate."
+    },
+    "mail_benchmark": {
+      "geometric_mean_ratio": 0.7926830015635021,
+      "definition": "Equal weight per case; geometric mean of Rust/C time ratios. Not a release gate."
+    },
+    "supplemental": {
+      "geometric_mean_ratio": 0.5089802588462284,
+      "definition": "Equal weight per case; geometric mean of Rust/C time ratios. Not a release gate."
+    },
+    "combined": {
+      "geometric_mean_ratio": 0.7363587460534707,
+      "definition": "Equal weight per case; geometric mean of Rust/C time ratios. Not a release gate."
+    }
+  },
+  "gate_passed": false
+}

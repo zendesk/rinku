@@ -1,0 +1,350 @@
+// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
+use std::ops::Range;
+
+pub const SHORT_DOMAINS: u32 = 1;
+
+#[derive(Clone, Copy, Debug)]
+pub enum Mode {
+    All,
+    Urls,
+    Emails,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Kind {
+    Www,
+    Email,
+    Url,
+}
+
+#[derive(Clone, Debug)]
+pub struct Link {
+    pub range: Range<usize>,
+    pub kind: Kind,
+}
+
+/// Holds offsets, never pointers into caller memory. Callers may refresh owned
+/// snapshots between `next` calls (including after recursive callbacks).
+pub struct Scanner {
+    end: usize,
+    last_link: usize,
+    active: [u8; 256],
+    flags: u32,
+}
+
+impl Scanner {
+    pub fn new(mode: Mode, flags: u32) -> Self {
+        let mut active = [0; 256];
+        active[b'<' as usize] = 4;
+        if !matches!(mode, Mode::Urls) {
+            active[b'@' as usize] = 2;
+        }
+        if !matches!(mode, Mode::Emails) {
+            active[b'w' as usize] = 1;
+            active[b'W' as usize] = 1;
+            active[b':' as usize] = 3;
+        }
+        Self {
+            end: 0,
+            last_link: 0,
+            active,
+            flags,
+        }
+    }
+
+    pub fn next(&mut self, input: &[u8], tags: &[impl AsRef<[u8]>]) -> Option<Link> {
+        while self.end < input.len() {
+            let Some(offset) = self.next_active(&input[self.end..]) else {
+                self.end = input.len();
+                return None;
+            };
+            self.end += offset;
+            let action = self.active[input[self.end] as usize];
+            let at = self.end;
+            if action == 4 {
+                self.end += crate::html::skip_tag(&input[at..], tags);
+                continue;
+            }
+            let parsed = match action {
+                1 => www(input, at, self.last_link).map(|range| Link {
+                    range,
+                    kind: Kind::Www,
+                }),
+                2 => email(input, at, self.last_link).map(|range| Link {
+                    range,
+                    kind: Kind::Email,
+                }),
+                3 => url(input, at, self.last_link, self.flags).map(|range| Link {
+                    range,
+                    kind: Kind::Url,
+                }),
+                _ => None,
+            };
+            if let Some(link) = parsed {
+                self.end = link.range.end;
+                self.last_link = self.end;
+                return Some(link);
+            }
+            self.end += 1;
+        }
+        None
+    }
+
+    fn next_active(&self, data: &[u8]) -> Option<usize> {
+        if self.active[b':' as usize] == 0 {
+            return memchr::memchr2(b'<', b'@', data);
+        }
+        let emails = self.active[b'@' as usize] != 0;
+        let mut offset = 0;
+        // Bounded chunks avoid rescanning a whole suffix for one character
+        // class when the other class repeatedly matches near the beginning.
+        // memchr provides safe, optimized byte search; no UTF-8 semantics.
+        for chunk in data.chunks(256) {
+            let first = memchr::memchr3(b'<', b'w', b'W', chunk);
+            let rest = &chunk[..first.unwrap_or(chunk.len())];
+            let second = if emails {
+                memchr::memchr2(b':', b'@', rest)
+            } else {
+                memchr::memchr(b':', rest)
+            };
+            if let Some(found) = second.or(first) {
+                return Some(offset + found);
+            }
+            offset += chunk.len();
+        }
+        None
+    }
+}
+
+pub(crate) fn space(c: u8) -> bool {
+    // Ruby's rb_isspace, not Rust's broader ASCII whitespace predicate.
+    matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
+}
+
+fn unicode_space(data: &[u8]) -> bool {
+    if data.first().is_some_and(|&c| space(c)) {
+        return true;
+    }
+    matches!(
+        data.get(..3),
+        Some([0xe2, 0x80, 0x80..=0x8c | 0xa8 | 0xa9 | 0xaf])
+            | Some([0xe2, 0x81, 0x9f])
+            | Some([0xe3, 0x80, 0x80])
+            | Some([0xef, 0xbb, 0xbf])
+    )
+}
+
+fn domain(data: &[u8], short: bool) -> usize {
+    if data.is_empty() || matches!(data[0], b'.' | b'-') {
+        return 0;
+    }
+    let mut dots = 0;
+    let mut i = 0;
+    // Deliberately don't classify the final byte: a historical parser quirk.
+    while i < data.len() - 1 {
+        match data[i] {
+            b'.' => dots += 1,
+            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' => (),
+            _ => break,
+        }
+        i += 1;
+    }
+    if short || dots > 0 {
+        i
+    } else {
+        0
+    }
+}
+
+fn delim(data: &[u8], mut end: usize) -> usize {
+    if let Some(i) = data[..end].iter().position(|&c| c == b'<') {
+        end = i;
+    }
+    while end > 0 {
+        match data[end - 1] {
+            // strchr in the C version matches its terminating NUL too.
+            b'?' | b'!' | b'.' | b',' | 0 => end -= 1,
+            b';' => {
+                if end < 2 {
+                    end -= 1;
+                    continue;
+                }
+                let mut new_end = end - 2;
+                while new_end > 0
+                    && (data[new_end].is_ascii_alphanumeric() || data[new_end] == b'#')
+                {
+                    new_end -= 1;
+                }
+                end = if new_end < end - 2 && data[new_end] == b'&' {
+                    new_end
+                } else {
+                    end - 1
+                };
+            }
+            _ => break,
+        }
+    }
+    if end == 0 {
+        return 0;
+    }
+    let close = data[end - 1];
+    let open = match close {
+        b'"' => b'"',
+        b'\'' => b'\'',
+        b')' => b'(',
+        b']' => b'[',
+        b'}' => b'{',
+        _ => return end,
+    };
+    let mut opening = 0;
+    let mut closing = 0;
+    for &c in &data[..end] {
+        if c == open {
+            opening += 1;
+        } else if c == close {
+            closing += 1;
+        }
+    }
+    if closing != opening {
+        end - 1
+    } else {
+        end
+    }
+}
+
+fn delimit(data: &[u8], mut end: usize) -> usize {
+    end = delim(data, end);
+    let mut iterations = 0;
+    while end != 0 {
+        let next = delim(data, end);
+        if next == end || iterations > 5 {
+            break;
+        }
+        end = next;
+        iterations += 1;
+    }
+    end
+}
+
+fn tail(data: &[u8], mut end: usize) -> Option<usize> {
+    if data.get(end).is_some_and(|&c| c > 127) {
+        if !unicode_space(&data[end..]) {
+            return None;
+        }
+    } else {
+        while end < data.len() && !unicode_space(&data[end..]) {
+            end += 1;
+        }
+    }
+    let end = delimit(data, end);
+    (end > 0).then_some(end)
+}
+
+fn www(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
+    // Ruby's rb_ispunct is !rb_isalnum, including NUL/control/high bytes.
+    // It is intentionally broader than ASCII punctuation or libc ispunct.
+    if at > last && input[at - 1].is_ascii_alphanumeric() {
+        return None;
+    }
+    let data = &input[at..];
+    if !data.starts_with(b"www.") {
+        return None;
+    }
+    let end = domain(data, false);
+    if end == 0 {
+        return None;
+    }
+    Some(at..at + tail(data, end)?)
+}
+
+fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
+    let mut start = at;
+    while start > last {
+        let c = input[start - 1];
+        if !c.is_ascii_alphanumeric() && !b".+-_\0".contains(&c) {
+            break;
+        }
+        start -= 1;
+    }
+    if start == at {
+        return None;
+    }
+    let data = &input[at..];
+    let mut end = 0;
+    let mut ats = 0;
+    let mut dots = 0;
+    while end < data.len() {
+        let c = data[end];
+        if c.is_ascii_alphanumeric() {
+            end += 1;
+            continue;
+        }
+        if c == b'@' {
+            ats += 1;
+        } else if c == b'.' && end < data.len() - 1 {
+            dots += 1;
+        } else if c != b'-' && c != b'_' {
+            break;
+        }
+        end += 1;
+    }
+    if end < 2 || ats != 1 || dots == 0 {
+        return None;
+    }
+    let end = delimit(data, end);
+    (end > 0).then_some(start..at + end)
+}
+
+fn url(input: &[u8], at: usize, last: usize, flags: u32) -> Option<Range<usize>> {
+    let data = &input[at..];
+    if data.len() < 4 || !data.starts_with(b"://") {
+        return None;
+    }
+    let mut start = at;
+    while start > last && input[start - 1].is_ascii_alphabetic() {
+        start -= 1;
+    }
+    let link = &input[start..];
+    let safe = [
+        b"/".as_slice(),
+        b"http://",
+        b"https://",
+        b"ftp://",
+        b"mailto:",
+    ]
+    .iter()
+    .any(|prefix| {
+        link.len() > prefix.len()
+            && link[..prefix.len()].eq_ignore_ascii_case(prefix)
+            && link[prefix.len()].is_ascii_alphanumeric()
+    });
+    if !safe {
+        return None;
+    }
+    let len = domain(&data[3..], flags & SHORT_DOMAINS != 0);
+    if len == 0 {
+        return None;
+    }
+    Some(start..at + tail(data, 3 + len)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bounded_whitespace() {
+        for prefix in [&b"\xe2"[..], b"\xe2\x80", b"\xe3", b"\xe3\x80", b"\xef\xbb"] {
+            assert!(!unicode_space(prefix));
+        }
+        assert!(unicode_space(b"\xe2\x80\x8c"));
+        assert!(!unicode_space(b"\xc2\xa0"));
+    }
+
+    #[test]
+    fn short_domain_final_byte_quirk() {
+        assert_eq!(domain(b"x", true), 0);
+        assert_eq!(domain(b"xy", true), 1);
+        assert_eq!(domain(b"a.b", false), 2);
+    }
+}

@@ -7,16 +7,26 @@ Rinku does linking
 
 Rinku is a Ruby library that does autolinking.
 It parses text and turns anything that remotely resembles a link into an HTML link,
-just like the Ruby on Rails `auto_link` method -- but it's about 20 times faster,
-because it's written in C, and it's about 20 times smarter when linking,
-because it does actual parsing instead of RegEx replacements.
+just like the Ruby on Rails `auto_link` method. The native implementation uses
+a safe, byte-oriented Rust parser and a thin Magnus/rb-sys Ruby binding rather
+than regular-expression replacements.
 
 Rinku is a Ruby Gem
 -------------------
 
 Rinku is available as a Ruby gem:
 
-    $ [sudo] gem install rinku
+    $ gem install zendesk-rinku --pre
+
+The 2.0 prerelease requires **CRuby 3.3 or newer**. Source builds require
+Rust/Cargo **1.85 or newer**, Ruby development headers, a C/C++ compiler, `make`,
+and libclang (used by rb-sys's binding generator). Install Rust with
+[rustup](https://rustup.rs/); on Debian/Ubuntu install `build-essential`,
+`ruby-dev`, and `libclang-dev`. On macOS install the Xcode command-line tools
+and LLVM if libclang cannot be found (`LIBCLANG_PATH` can select it).
+
+This branch is a prerelease candidate, not a claim of completed release
+qualification. See [validation and benchmarking](docs/rust-rewrite.md).
 
 The Rinku source is available at GitHub:
 
@@ -30,8 +40,8 @@ It exports a single method called `Rinku.auto_link`.
 ~~~~~ruby
 require 'rinku'
 
-Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil)
-Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil) { |link_text| ... }
+Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0)
+Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0) { |link_text| ... }
 ~~~~~~
 
 Parses a block of text looking for "safe" urls or email addresses,
@@ -73,7 +83,17 @@ in each generated link, e.g.
 
 -   `skip_tags` is a list of strings with the names of HTML tags that will be skipped
 when autolinking. If `nil`, this defaults to the value of the global `Rinku.skip_tags`,
-which is initially `["a", "pre", "code", "kbd", "script"]`.
+which initially returns `nil` and selects the built-in list
+`["a", "pre", "code", "kbd", "script"]`. An empty array disables tag-content
+skipping. The accessor also works on objects that include `Rinku`.
+
+-   `flags` is a small Integer bitmask. `Rinku::AUTOLINK_SHORT_DOMAINS` permits
+short domains such as `http://intranet`.
+
+Arguments and callback results are strictly typed; `to_str`, `to_int`, and
+`to_ary` coercions are not accepted. Output preserves source bytes and encoding.
+If no link is found, the original input object is returned, including frozen
+strings and string subclasses. HTML names and `www.` remain case-sensitive.
 
 -   `&block` is an optional block argument. If a block is passed, it will
 be yielded for each found link in the text, and its return value will be used instead
@@ -97,8 +117,29 @@ choose to use Rinku instead.
 require 'rails_rinku'
 ~~~~
 
-The `rails_rinku` package monkeypatches Rails with an `auto_link` method that
-mimics 100% the original one, parameter per parameter. It's just faster.
+The `rails_rinku` integration adds `auto_link` to ActionView, including HTML
+escaping, safe output, options, and callbacks. Load ActionView/Rails before
+requiring it. Rails 7.2 and newer use the current tag builder API.
+
+Development
+-----------
+
+```sh
+bundle install
+bundle exec rake test gc_stress       # optimized extension; stress is isolated
+cargo test -p rinku-core --locked
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo +nightly-2026-10-01 miri test -p rinku-core --locked
+ruby tools/package_smoke.rb
+```
+
+The core forbids unsafe code and does not depend on Ruby. Miri covers that
+production parser, not libruby. CI tests Ruby 3.3, 3.4, and 4.0, GC compaction,
+the source gem, and the historical C baseline. Expand the Ruby matrix when
+new stable versions are released. See [the rewrite notes](docs/rust-rewrite.md)
+for ownership rules, mutation semantics, differential testing, and performance
+release gates.
 
 Releasing a new version
 ----------------------------------------------------
@@ -130,4 +171,3 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
