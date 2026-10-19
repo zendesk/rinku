@@ -2,6 +2,9 @@
 require 'json'
 
 module Workloads
+  FIXTURE_DIRECTORY = File.expand_path('../test/fixtures/workloads', __dir__)
+  FIXTURE_PATHS = %w[benchmark.json mail_benchmark.json].map { |name| File.join(FIXTURE_DIRECTORY, name) }.freeze
+
   Case = Struct.new(:name, :input, :expected, :operation, keyword_init: true) do
     def run
       operation.call(input)
@@ -14,14 +17,13 @@ module Workloads
   end
 
   def self.load(supplemental: false)
-    root = File.expand_path('..', __dir__)
-    general = JSON.parse(File.read(File.join(root, 'benchmark.json'))).map do |row|
+    general = JSON.parse(File.read(FIXTURE_PATHS[0])).map do |row|
       Case.new(name: "benchmark/#{row.fetch('name')}", input: row.fetch('input'),
         expected: row.fetch('expected_output'), operation: ->(text) {
           Rinku.auto_link(Rinku.auto_link(text, :urls, 'rel="noreferrer"'), :email_addresses)
         })
     end
-    mail = JSON.parse(File.read(File.join(root, 'mail_benchmark.json')))
+    mail = JSON.parse(File.read(FIXTURE_PATHS[1]))
     raise 'Unknown operation' unless mail.fetch('operation') == 'Rinku.auto_link'
     declared = mail.fetch('arguments')
     args = [declared.fetch('mode').to_sym, declared.fetch('link_attributes'), declared.fetch('skip_tags')]
@@ -38,6 +40,20 @@ module Workloads
         # Supplemental expected outputs are independently checked by differential.rb.
         cases << Case.new(name: "supplemental/#{name}", input: input,
           expected: operation.call(input), operation: operation)
+      end
+      [1_000, 4_000, 16_000, 64_000].each do |count|
+        [false, true].each do |frozen|
+          input = 'http://a.com ' * count
+          input.freeze if frozen
+          cases << Case.new(name: "supplemental/callbacks_#{frozen ? 'frozen' : 'mutable'}_#{count}",
+            input: input, expected: '<a href="http://a.com">http://a.com</a> ' * count,
+            operation: ->(text) { Rinku.auto_link(text) { |link| link } })
+        end
+      end
+      [1_000, 4_000, 16_000].each do |count|
+        input = 'a@' * count
+        cases << Case.new(name: "supplemental/repeated_at_#{count}", input: input,
+          expected: input, operation: ->(text) { Rinku.auto_link(text) })
       end
     end
     cases

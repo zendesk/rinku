@@ -98,7 +98,20 @@ fn tag_bytes(tags: RArray) -> Result<Vec<Vec<u8>>, Error> {
     Ok(result)
 }
 
-fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Error> {
+// Keep this on the native stack: handles are VM/stack roots, never stored in a
+// Rust heap container. The Ruby array marks the original tag string objects.
+struct Arguments {
+    text: RString,
+    attrs: Option<RString>,
+    tags: Option<RArray>,
+    tag_snapshot: Vec<Vec<u8>>,
+    mode: Mode,
+    flags: u32,
+}
+
+fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Arguments, Error> {
+    // Preserve C's order: arity, text, mode type, attributes, tags and their
+    // contents, flags/range, then mode value. Later errors must not mask these.
     ruby.check_arity(args.len(), 1..=5)?;
     let nil = ruby.qnil().as_value();
     let get = |i| args.get(i).copied().unwrap_or(nil);
@@ -130,9 +143,12 @@ fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Erro
     } else {
         check_type(skip, ruby_value_type::RUBY_T_ARRAY)?;
         let array = RArray::from_value(skip).unwrap();
-        Some(array.dup())
+        // Duplication allocates; catch Ruby exceptions before unwinding Rust.
+        let raw = protect(|| array.dup().as_raw())?;
+        // SAFETY: Ruby returned an array, immediately rooted on this stack.
+        Some(RArray::from_value(unsafe { Value::from_raw(raw) }).unwrap())
     };
-    let mut tag_snapshot = match tags {
+    let tag_snapshot = match tags {
         Some(tags) => tag_bytes(tags)?,
         None => Vec::new(),
     };
@@ -158,78 +174,126 @@ fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Erro
             "Invalid linking mode (possible values are :all, :urls, :email_addresses)",
         ));
     };
-    let encoding = text.enc_get();
-    let block = if ruby.block_given() {
-        Some(ruby.block_proc()?)
+    Ok(Arguments {
+        text,
+        attrs,
+        tags,
+        tag_snapshot,
+        mode,
+        flags,
+    })
+}
+
+fn without_callback(args: &Arguments) -> Option<Vec<u8>> {
+    // SAFETY: args and its Ruby handles live on the native/VM stacks. This
+    // entire function is Ruby-free under the GVL; Rust allocation cannot GC.
+    let input = unsafe { args.text.as_slice() };
+    // SAFETY: same Ruby-free region; attributes are rooted by the VM arguments.
+    let attributes = args.attrs.as_ref().map(|a| unsafe { a.as_slice() });
+    let attributes = attributes.map(|a| &a[trim_start(a)..]);
+    if args.tags.is_none() {
+        rinku_core::auto_link(input, args.mode, args.flags, attributes, DEFAULT_SKIP_TAGS)
     } else {
+        rinku_core::auto_link(input, args.mode, args.flags, attributes, &args.tag_snapshot)
+    }
+}
+
+fn frozen_snapshot(text: RString) -> Result<RString, Error> {
+    // SAFETY: text is VM/stack-rooted, GVL held, no borrowed Ruby slices.
+    // Ruby shares eligible buffers with this immutable string, so subsequent
+    // writes must detach. Embedded strings are copied instead (bounded size).
+    // No Ruby method dispatch: String subclass overrides cannot affect this.
+    let raw = protect(|| unsafe { rb_sys::rb_str_new_frozen(text.as_raw()) })?;
+    // SAFETY: valid Ruby string, immediately materialized on the native stack.
+    Ok(RString::from_value(unsafe { Value::from_raw(raw) }).unwrap())
+}
+
+fn refresh_source(
+    text: RString,
+    snapshot: &mut RString,
+    input: &mut [u8],
+    unread: usize,
+) -> Result<(), Error> {
+    {
+        // SAFETY: both handles are native-stack rooted under the GVL. No Ruby
+        // calls occur in this scope, and neither pointer survives the scope.
+        let current = unsafe { text.as_slice() };
+        let previous = unsafe { snapshot.as_slice() };
+        // Resizing was undefined in C: keep the last stable snapshot until the
+        // original length returns. Equal pointers are sufficient ONLY because
+        // the rooted frozen alias prevents in-place edits to shared storage.
+        if current.len() != input.len() || current.as_ptr() == previous.as_ptr() {
+            return Ok(());
+        }
+        // Detached storage (or an embedded string): copy only unread bytes.
+        input[unread..].copy_from_slice(&current[unread..]);
+    }
+    *snapshot = frozen_snapshot(text)?;
+    Ok(())
+}
+
+fn with_callback(
+    ruby: &Ruby,
+    args: &mut Arguments,
+    block: magnus::block::Proc,
+) -> Result<Option<Vec<u8>>, Error> {
+    let encoding = args.text.enc_get();
+    let mut attributes = args.attrs.map(bytes);
+    let attr_start = attributes.as_deref().map_or(0, trim_start);
+    // A stack-rooted frozen alias is a write detector, not a borrowed buffer.
+    // Frozen sources need only the owned snapshot and no refresh checks.
+    let mut source_snapshot = if args.text.is_frozen() {
         None
-    };
-    let output = if let Some(block) = block {
-        let mut attributes = attrs.map(bytes);
-        let attr_start = attributes.as_deref().map_or(0, trim_start);
-        let mut input = bytes(text);
-        let mut scanner = Scanner::new(mode, flags);
-        let mut renderer = Renderer::default();
-        while let Some(link) = if tags.is_none() {
-            scanner.next(&input, DEFAULT_SKIP_TAGS)
-        } else {
-            scanner.next(&input, &tag_snapshot)
-        } {
-            renderer.start_link(
-                &input,
-                &link,
-                attributes.as_deref().map(|a| &a[attr_start.min(a.len())..]),
-            );
-            let result = call_link(ruby, block, &input[link.range.clone()], encoding)?;
-            check_type(result, ruby_value_type::RUBY_T_STRING)?;
-            let rendered = RString::from_value(result).unwrap();
-            // SAFETY: result is live on this native stack, GVL held. Copy
-            // straight into the owned renderer before any further Ruby call.
-            renderer.end_link(unsafe { rendered.as_slice() });
-            // Same-length in-place edits have defined behavior in C. Refresh
-            // snapshots after the callback, never holding Ruby buffer pointers.
-            // Resizing the source had undefined C behavior: retain the last
-            // stable source snapshot for that case instead.
-            // SAFETY: VM-rooted text, no Ruby calls until this copy completes.
-            let current = unsafe { text.as_slice() };
-            if current.len() == input.len() {
-                // Emitted bytes cannot be scanned, rewound into, or copied
-                // again. Only the unread suffix can affect later output.
-                let unread = link.range.end;
-                if current[unread..] != input[unread..] {
-                    input[unread..].copy_from_slice(&current[unread..]);
-                }
-            }
-            if let (Some(attrs), Some(snapshot)) = (attrs, &mut attributes) {
-                refresh(attrs, snapshot);
-            }
-            if let Some(tags) = tags {
-                // Mutated tag bytes are C strings; new NULs safely terminate.
-                for (i, snapshot) in tag_snapshot.iter_mut().enumerate() {
-                    refresh(tags.entry::<RString>(i as isize)?, snapshot);
-                }
-            }
-        }
-        renderer.finish(&input)
     } else {
-        // SAFETY: text is rooted on the Ruby VM stack and in this native frame.
-        // The entire core call is Ruby-free under the GVL. Rust allocations do
-        // not invoke Ruby GC; no borrowed memory survives this expression.
-        let input = unsafe { text.as_slice() };
-        // SAFETY: same Ruby-free region as input; attrs is VM-rooted in args.
-        let attributes = attrs.as_ref().map(|a| unsafe { a.as_slice() });
-        let attributes = attributes.map(|a| &a[trim_start(a)..]);
-        if tags.is_none() {
-            rinku_core::auto_link(input, mode, flags, attributes, DEFAULT_SKIP_TAGS)
-        } else {
-            rinku_core::auto_link(input, mode, flags, attributes, &tag_snapshot)
+        Some(frozen_snapshot(args.text)?)
+    };
+    let mut input = bytes(args.text);
+    let mut scanner = Scanner::new(args.mode, args.flags);
+    let mut renderer = Renderer::default();
+    while let Some(link) = if args.tags.is_none() {
+        scanner.next(&input, DEFAULT_SKIP_TAGS)
+    } else {
+        scanner.next(&input, &args.tag_snapshot)
+    } {
+        renderer.start_link(
+            &input,
+            &link,
+            attributes.as_deref().map(|a| &a[attr_start.min(a.len())..]),
+        );
+        let result = call_link(ruby, block, &input[link.range.clone()], encoding)?;
+        check_type(result, ruby_value_type::RUBY_T_STRING)?;
+        let rendered = RString::from_value(result).unwrap();
+        // SAFETY: stack-rooted result, GVL held. Copy into the owned renderer
+        // before any further Ruby call; the borrow ends at this statement.
+        renderer.end_link(unsafe { rendered.as_slice() });
+        if let Some(snapshot) = &mut source_snapshot {
+            refresh_source(args.text, snapshot, &mut input, link.range.end)?;
         }
+        if let (Some(attrs), Some(snapshot)) = (args.attrs, &mut attributes) {
+            refresh(attrs, snapshot);
+        }
+        if let Some(tags) = args.tags {
+            // Mutated tag bytes are C strings; new NULs safely terminate.
+            for (i, snapshot) in args.tag_snapshot.iter_mut().enumerate() {
+                refresh(tags.entry::<RString>(i as isize)?, snapshot);
+            }
+        }
+    }
+    Ok(renderer.finish(&input))
+}
+
+fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Error> {
+    let mut args = validate_arguments(ruby, receiver, args)?;
+    let output = if ruby.block_given() {
+        with_callback(ruby, &mut args, ruby.block_proc()?)?
+    } else {
+        without_callback(&args)
     };
     match output {
-        None => Ok(text.as_value()),
+        None => Ok(args.text.as_value()),
         // C copies the source's *current* encoding on output, while callback
         // arguments use the encoding captured before scanning.
-        Some(output) => Ok(ruby_string(ruby, &output, text.enc_get())?.as_value()),
+        Some(output) => Ok(ruby_string(ruby, &output, args.text.enc_get())?.as_value()),
     }
 }
 

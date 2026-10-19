@@ -5,7 +5,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
@@ -14,7 +14,6 @@ jobs:
           sudo apt-get install -y libclang-dev heaptrack
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
           bundler-cache: true
       - run: bundle exec rake compile
       - run: ruby tools/build_baseline.rb "$RUNNER_TEMP/rinku-c"

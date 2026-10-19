@@ -1,7 +1,18 @@
-use rinku_core::{auto_link, link_with, Mode, Scanner, DEFAULT_SKIP_TAGS};
+use rinku_core::{auto_link, link_with, Mode, Scanner, DEFAULT_SKIP_TAGS, SHORT_DOMAINS};
 
 fn link(input: &[u8]) -> Vec<u8> {
     auto_link(input, Mode::All, 0, None, DEFAULT_SKIP_TAGS).unwrap_or_else(|| input.to_vec())
+}
+
+fn assert_identity_rendering(input: &[u8], mode: Mode, flags: u32) {
+    for attributes in [None, Some(b"rel=x".as_slice())] {
+        let ordinary = auto_link(input, mode, flags, attributes, DEFAULT_SKIP_TAGS);
+        let callback = link_with(input, mode, flags, attributes, DEFAULT_SKIP_TAGS, |text| {
+            Ok::<_, std::convert::Infallible>(text.to_vec())
+        })
+        .unwrap();
+        assert_eq!(callback, ordinary);
+    }
 }
 
 #[test]
@@ -99,17 +110,34 @@ fn truncated_sequences_and_every_byte() {
     ] {
         for prefix in [b"http://a.com/".as_slice(), b"www.a.com/", b"http://a.com"] {
             let text = [prefix, suffix].concat();
-            assert_eq!(link(&text), link(&text));
+            let expected = if prefix == b"http://a.com" {
+                // A high byte immediately after the domain rejects the link.
+                text.clone()
+            } else {
+                // After an ASCII path delimiter, truncated sequences are
+                // ordinary tail bytes and remain inside both href and label.
+                let scheme = if prefix.starts_with(b"www.") {
+                    b"http://".as_slice()
+                } else {
+                    b""
+                };
+                [b"<a href=\"", scheme, &text, b"\">", &text, b"</a>"].concat()
+            };
+            assert_eq!(link(&text), expected);
         }
     }
     for byte in 0..=255 {
         let text = [b"http://a.com/".as_slice(), &[byte], b" a@b.com www.a.com"].concat();
-        assert_eq!(link(&text), link(&text));
+        for mode in [Mode::All, Mode::Urls, Mode::Emails] {
+            for flags in [0, SHORT_DOMAINS] {
+                assert_identity_rendering(&text, mode, flags);
+            }
+        }
     }
 }
 
 #[test]
-fn bounded_arbitrary_bytes_are_deterministic_and_ranges_are_valid() {
+fn bounded_arbitrary_bytes_have_equivalent_rendering_and_valid_ranges() {
     // Fixed seed and bounds make this property test reproducible under Miri.
     let mut random = 0x1234_5678_u64;
     let count = if cfg!(miri) { 64 } else { 4096 };
@@ -124,8 +152,10 @@ fn bounded_arbitrary_bytes_are_deterministic_and_ranges_are_valid() {
         if iteration % 2 == 0 {
             text.extend_from_slice(b" www.a.com http://b.com a@b.com");
         }
-        assert_eq!(link(&text), link(&text));
         for mode in [Mode::All, Mode::Urls, Mode::Emails] {
+            for flags in [0, SHORT_DOMAINS] {
+                assert_identity_rendering(&text, mode, flags);
+            }
             let mut scanner = Scanner::new(mode, iteration as u32);
             let mut end = 0;
             while let Some(link) = scanner.next(&text, DEFAULT_SKIP_TAGS) {
@@ -136,6 +166,23 @@ fn bounded_arbitrary_bytes_are_deterministic_and_ranges_are_valid() {
             }
         }
     }
+}
+
+#[test]
+fn repeated_at_rejection_preserves_later_candidates() {
+    let input = b"a@".repeat(if cfg!(miri) { 128 } else { 16_000 });
+    assert_eq!(
+        auto_link(&input, Mode::All, 0, None, DEFAULT_SKIP_TAGS),
+        None
+    );
+    assert_eq!(
+        link(b"a@b@c.com"),
+        b"a@<a href=\"mailto:b@c.com\">b@c.com</a>"
+    );
+    assert_eq!(
+        link(b"a@b@c.com later@d.com"),
+        b"a@<a href=\"mailto:b@c.com\">b@c.com</a> <a href=\"mailto:later@d.com\">later@d.com</a>"
+    );
 }
 
 #[test]

@@ -78,22 +78,81 @@ class GCStressTest < Minitest::Test
   end
 
   def test_safe_resize_policy_and_callback_result_copy
-    source = +'http://a.com http://b.com'
-    result = +"\xff\0"
-    output = stressed do
-      Rinku.auto_link(source) do |_link|
-        source.replace('short')
-        GC.start
-        result
+    ['short', 'http://new.com ' * 1024].each do |replacement|
+      source = +'http://a.com http://b.com'
+      result = +"\xff\0"
+      output = stressed do
+        Rinku.auto_link(source) do |_link|
+          source.replace(replacement)
+          GC.start
+          result
+        end
       end
+      assert_equal "<a href=\"http://a.com\">\xff\0</a> <a href=\"http://b.com\">\xff\0</a>".b, output.b
+      assert_equal Encoding::UTF_8, output.encoding
     end
-    assert_equal "<a href=\"http://a.com\">\xff\0</a> <a href=\"http://b.com\">\xff\0</a>".b, output.b
-    assert_equal Encoding::UTF_8, output.encoding
   end
 
   def nonlocal_return
     Rinku.auto_link('http://a.com') { return :returned }
     :unreachable
+  end
+
+  def test_source_snapshots_track_embedded_shared_and_replaced_strings
+    ['a@b.co d@e.co', 'http://a.com http://b.com ' * 8].each do |original|
+      [:setbyte, :replace].each do |mutation|
+        source = original.dup
+        shared_copy = source.dup
+        second = original.index(' ') + 1
+        changed = original.dup
+        changed.setbyte(second, 'x'.ord)
+        trace = []
+        output = stressed do
+          Rinku.auto_link(source) do |link|
+            trace << link
+            if trace.length == 1
+              if mutation == :setbyte
+                source.setbyte(second, 'x'.ord)
+              else
+                source.replace(changed.dup)
+              end
+            end
+            GC.start
+            GC.compact if GC.respond_to?(:compact)
+            link
+          end
+        end
+        assert_equal Rinku.auto_link(changed), output
+        assert_equal original, shared_copy
+        assert_equal changed, source
+      end
+    end
+  end
+
+  def test_resize_fallback_keeps_latest_snapshot_and_resumes_at_original_length
+    source = +'http://a.com http://b.com http://c.com http://d.com'
+    trace = []
+    output = stressed do
+      Rinku.auto_link(source) do |link|
+        trace << link
+        case trace.length
+        when 1 then source.sub!('b.com', 'x.com')
+        when 2 then source.replace('short')
+        when 3 then source.replace('http://a.com http://x.com http://c.com http://y.com')
+        end
+        GC.start
+        GC.compact if GC.respond_to?(:compact)
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://x.com http://c.com http://y.com], trace
+    assert_equal trace.map { |link| %(<a href="#{link}">#{link}</a>) }.join(' '), output
+  end
+
+  def test_source_can_be_frozen_during_callback
+    source = +'http://a.com http://b.com'
+    output = stressed { Rinku.auto_link(source) { |link| source.freeze; GC.start; link } }
+    assert_equal '<a href="http://a.com">http://a.com</a> <a href="http://b.com">http://b.com</a>', output
   end
 
   def test_encoding_mutation_uses_initial_callback_and_current_output_encoding

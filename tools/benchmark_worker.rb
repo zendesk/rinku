@@ -44,8 +44,8 @@ metadata = {
   native_library: $LOADED_FEATURES.grep(/rinku\.(so|bundle)$/),
   native_sha256: $LOADED_FEATURES.grep(/rinku\.(so|bundle)$/).to_h { |file| [file, Digest::SHA256.file(file).hexdigest] },
   sample_seconds: duration, warmup_seconds: warmup,
-  fixture_sha256: %w[benchmark.json mail_benchmark.json].to_h { |file|
-    [file, Digest::SHA256.file(File.expand_path("../#{file}", __dir__)).hexdigest]
+  fixture_sha256: Workloads::FIXTURE_PATHS.to_h { |file|
+    [File.basename(file), Digest::SHA256.file(file).hexdigest]
   }
 }
 puts JSON.generate(metadata: metadata, measurements: measurements)

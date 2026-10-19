@@ -1,0 +1,3402 @@
+{
+  "c": [
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 261692,
+          "elapsed_seconds": 0.09643700020387769,
+          "seconds_per_op": 0.00000036851336763782496,
+          "ops_per_second": 2713605.767980716,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 118446,
+          "elapsed_seconds": 0.09549500001594424,
+          "seconds_per_op": 0.0000008062323760696371,
+          "ops_per_second": 1240337.1902217264,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 139227,
+          "elapsed_seconds": 0.09740099986083806,
+          "seconds_per_op": 0.0000006995841313885816,
+          "ops_per_second": 1429420.6445408256,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 135414,
+          "elapsed_seconds": 0.0968029999639839,
+          "seconds_per_op": 0.0000007148670001918848,
+          "ops_per_second": 1398861.6060492087,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 125738,
+          "elapsed_seconds": 0.10114299994893372,
+          "seconds_per_op": 0.0000008043948523830005,
+          "ops_per_second": 1243170.5611212254,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 170816,
+          "elapsed_seconds": 0.09818400000222027,
+          "seconds_per_op": 0.0000005747939303239759,
+          "ops_per_second": 1739753.9313547753,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 108139,
+          "elapsed_seconds": 0.09919500001706183,
+          "seconds_per_op": 0.0000009172916340733855,
+          "ops_per_second": 1090165.834784009,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 125735,
+          "elapsed_seconds": 0.10033400007523596,
+          "seconds_per_op": 0.0000007979798789138741,
+          "ops_per_second": 1253164.4298614324,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 65310,
+          "elapsed_seconds": 0.09562900010496378,
+          "seconds_per_op": 0.0000014642321253248167,
+          "ops_per_second": 682951.8234877997,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 138363,
+          "elapsed_seconds": 0.09994899993762374,
+          "seconds_per_op": 0.0000007223679736463053,
+          "ops_per_second": 1384336.012229734,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 38711,
+          "elapsed_seconds": 0.09472499997355044,
+          "seconds_per_op": 0.000002446978894204501,
+          "ops_per_second": 408667.19462453487,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 107879,
+          "elapsed_seconds": 0.09721300005912781,
+          "seconds_per_op": 0.0000009011299702363556,
+          "ops_per_second": 1109717.8354169177,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 159812,
+          "elapsed_seconds": 0.10795200010761619,
+          "seconds_per_op": 0.000000675493705776889,
+          "ops_per_second": 1480398.6942408213,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 198560,
+          "elapsed_seconds": 0.09737899992614985,
+          "seconds_per_op": 0.0000004904260673154203,
+          "ops_per_second": 2039043.3271093734,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 182855,
+          "elapsed_seconds": 0.09584799990989268,
+          "seconds_per_op": 0.0000005241748921817434,
+          "ops_per_second": 1907760.205449286,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 181767,
+          "elapsed_seconds": 0.09929799987003207,
+          "seconds_per_op": 0.0000005462927807029443,
+          "ops_per_second": 1830520.2545661435,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 214283,
+          "elapsed_seconds": 0.09978199983015656,
+          "seconds_per_op": 0.0000004656552308403213,
+          "ops_per_second": 2147511.5788893863,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 62382,
+          "elapsed_seconds": 0.09648599987849593,
+          "seconds_per_op": 0.000001546696160406783,
+          "ops_per_second": 646539.3951304558,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 17201,
+          "elapsed_seconds": 0.10155500005930662,
+          "seconds_per_op": 0.000005904017211749702,
+          "ops_per_second": 169376.19998970872,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 113,
+          "elapsed_seconds": 0.09695599996484816,
+          "seconds_per_op": 0.0008580176988039661,
+          "ops_per_second": 1165.4771240662637,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5427,
+          "elapsed_seconds": 0.09657700010575354,
+          "seconds_per_op": 0.000017795651392252358,
+          "ops_per_second": 56193.5035676956,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 583,
+          "elapsed_seconds": 0.09942699992097914,
+          "seconds_per_op": 0.00017054373914404656,
+          "ops_per_second": 5863.598423600698,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 585,
+          "elapsed_seconds": 0.10202799993567169,
+          "seconds_per_op": 0.0001744068374968747,
+          "ops_per_second": 5733.720158866591,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 153,
+          "elapsed_seconds": 0.10019399994052947,
+          "seconds_per_op": 0.0006548627447093429,
+          "ops_per_second": 1527.0375480648916,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 147,
+          "elapsed_seconds": 0.09591999999247491,
+          "seconds_per_op": 0.00065251700675153,
+          "ops_per_second": 1532.5271060418306,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 38,
+          "elapsed_seconds": 0.09995100018568337,
+          "seconds_per_op": 0.002630289478570615,
+          "ops_per_second": 380.1862905764397,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 38,
+          "elapsed_seconds": 0.10055899992585182,
+          "seconds_per_op": 0.0026462894717329427,
+          "ops_per_second": 377.88760854841115,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17134800017811358,
+          "seconds_per_op": 0.010709250011132099,
+          "ops_per_second": 93.37722052996386,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17149700014851987,
+          "seconds_per_op": 0.010718562509282492,
+          "ops_per_second": 93.29609256222369,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 127,
+          "elapsed_seconds": 0.09821399999782443,
+          "seconds_per_op": 0.0007733385826600348,
+          "ops_per_second": 1293.0946708495044,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.19121099985204637,
+          "seconds_per_op": 0.011950687490752898,
+          "ops_per_second": 83.67719436842204,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 3.053277000086382,
+          "seconds_per_op": 0.19082981250539888,
+          "ops_per_second": 5.240271354203151,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 263388,
+          "elapsed_seconds": 0.09707599994726479,
+          "seconds_per_op": 0.00000036856652522994516,
+          "ops_per_second": 2713214.3902002755,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 116030,
+          "elapsed_seconds": 0.09453400014899671,
+          "seconds_per_op": 0.0000008147375691545006,
+          "ops_per_second": 1227389.0855895558,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 137323,
+          "elapsed_seconds": 0.09793899999931455,
+          "seconds_per_op": 0.0000007132017214837613,
+          "ops_per_second": 1402127.8551032897,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 133808,
+          "elapsed_seconds": 0.09879700001329184,
+          "seconds_per_op": 0.0000007383489777389382,
+          "ops_per_second": 1354373.1083129842,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 124128,
+          "elapsed_seconds": 0.09865700011141598,
+          "seconds_per_op": 0.0000007948005293843128,
+          "ops_per_second": 1258177.320005868,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 168844,
+          "elapsed_seconds": 0.09762999997474253,
+          "seconds_per_op": 0.0000005782260546702432,
+          "ops_per_second": 1729427.4305406224,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 105827,
+          "elapsed_seconds": 0.09928700001910329,
+          "seconds_per_op": 0.0000009382010263836572,
+          "ops_per_second": 1065869.6504037627,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 121325,
+          "elapsed_seconds": 0.0990369999781251,
+          "seconds_per_op": 0.0000008162950750309096,
+          "ops_per_second": 1225047.20485069,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 66386,
+          "elapsed_seconds": 0.09462299989536405,
+          "seconds_per_op": 0.0000014253457038436425,
+          "ops_per_second": 701584.1822116285,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 137427,
+          "elapsed_seconds": 0.09925099997781217,
+          "seconds_per_op": 0.000000722208881644889,
+          "ops_per_second": 1384640.961105905,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 37629,
+          "elapsed_seconds": 0.09688899992033839,
+          "seconds_per_op": 0.0000025748491833516276,
+          "ops_per_second": 388372.2613603026,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 98752,
+          "elapsed_seconds": 0.09531000000424683,
+          "seconds_per_op": 0.0000009651450097643272,
+          "ops_per_second": 1036113.734084564,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 153233,
+          "elapsed_seconds": 0.09728000010363758,
+          "seconds_per_op": 0.0000006348501961303217,
+          "ops_per_second": 1575174.751611356,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 205724,
+          "elapsed_seconds": 0.09881100011989474,
+          "seconds_per_op": 0.0000004803085693448248,
+          "ops_per_second": 2081994.917067733,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 180854,
+          "elapsed_seconds": 0.09714700002223253,
+          "seconds_per_op": 0.0000005371570439262197,
+          "ops_per_second": 1861652.9584918807,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 184554,
+          "elapsed_seconds": 0.09865399985574186,
+          "seconds_per_op": 0.0000005345535716144968,
+          "ops_per_second": 1870719.892451057,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 214336,
+          "elapsed_seconds": 0.09803700004704297,
+          "seconds_per_op": 0.0000004573986639997152,
+          "ops_per_second": 2186276.6088023,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 62295,
+          "elapsed_seconds": 0.09837000002153218,
+          "seconds_per_op": 0.0000015790994465291304,
+          "ops_per_second": 633272.3389891661,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 18527,
+          "elapsed_seconds": 0.09970399993471801,
+          "seconds_per_op": 0.000005381551246004103,
+          "ops_per_second": 185820.02740241817,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 112,
+          "elapsed_seconds": 0.10012200009077787,
+          "seconds_per_op": 0.0008939464293819453,
+          "ops_per_second": 1118.6352639624924,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5342,
+          "elapsed_seconds": 0.09472799999639392,
+          "seconds_per_op": 0.000017732684387194668,
+          "ops_per_second": 56393.04113042984,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 590,
+          "elapsed_seconds": 0.1015039999037981,
+          "seconds_per_op": 0.00017204067780304764,
+          "ops_per_second": 5812.578820136951,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 593,
+          "elapsed_seconds": 0.10437299986369908,
+          "seconds_per_op": 0.00017600843147335426,
+          "ops_per_second": 5681.546001115231,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 145,
+          "elapsed_seconds": 0.09713100013323128,
+          "seconds_per_op": 0.0006698689664360778,
+          "ops_per_second": 1492.8292697605136,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 155,
+          "elapsed_seconds": 0.1007099999114871,
+          "seconds_per_op": 0.00064974193491282,
+          "ops_per_second": 1539.072586001666,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.10280899982899427,
+          "seconds_per_op": 0.002636128200743443,
+          "ops_per_second": 379.3442214676734,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 37,
+          "elapsed_seconds": 0.10025799996219575,
+          "seconds_per_op": 0.0027096756746539394,
+          "ops_per_second": 369.04785666930894,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1704130000434816,
+          "seconds_per_op": 0.0106508125027176,
+          "ops_per_second": 93.88955065586272,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17207300011068583,
+          "seconds_per_op": 0.010754562506917864,
+          "ops_per_second": 92.9837917029866,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 133,
+          "elapsed_seconds": 0.10198000003583729,
+          "seconds_per_op": 0.0007667669175626864,
+          "ops_per_second": 1304.1772892063327,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.19230899983085692,
+          "seconds_per_op": 0.012019312489428557,
+          "ops_per_second": 83.19943431702421,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 3.050459000049159,
+          "seconds_per_op": 0.19065368750307243,
+          "ops_per_second": 5.245112292852372,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 268150,
+          "elapsed_seconds": 0.09686100017279387,
+          "seconds_per_op": 0.00000036121946736078265,
+          "ops_per_second": 2768400.0735243023,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 123491,
+          "elapsed_seconds": 0.1002119998447597,
+          "seconds_per_op": 0.0000008114923342167421,
+          "ops_per_second": 1232297.5311469908,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 139146,
+          "elapsed_seconds": 0.09616600000299513,
+          "seconds_per_op": 0.000000691115806440682,
+          "ops_per_second": 1446935.5073068053,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 139941,
+          "elapsed_seconds": 0.09631299995817244,
+          "seconds_per_op": 0.0000006882400437196565,
+          "ops_per_second": 1452981.425776112,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 127766,
+          "elapsed_seconds": 0.0984529999550432,
+          "seconds_per_op": 0.0000007705727654856785,
+          "ops_per_second": 1297735.9761342169,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 174656,
+          "elapsed_seconds": 0.09889700007624924,
+          "seconds_per_op": 0.0000005662387783772057,
+          "ops_per_second": 1766039.413383023,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 108990,
+          "elapsed_seconds": 0.09724100003950298,
+          "seconds_per_op": 0.0000008922011197311953,
+          "ops_per_second": 1120823.5204874913,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 127801,
+          "elapsed_seconds": 0.09894299996085465,
+          "seconds_per_op": 0.0000007741958197577066,
+          "ops_per_second": 1291662.87711675,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 68984,
+          "elapsed_seconds": 0.09975799988023937,
+          "seconds_per_op": 0.00000144610344254087,
+          "ops_per_second": 691513.4634096122,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 139445,
+          "elapsed_seconds": 0.09905599988996983,
+          "seconds_per_op": 0.0000007103589220837594,
+          "ops_per_second": 1407739.0582589018,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 39829,
+          "elapsed_seconds": 0.09448299999348819,
+          "seconds_per_op": 0.0000023722162241956412,
+          "ops_per_second": 421546.73330382217,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 113836,
+          "elapsed_seconds": 0.09726700000464916,
+          "seconds_per_op": 0.0000008544485049074912,
+          "ops_per_second": 1170345.5436536428,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 165257,
+          "elapsed_seconds": 0.0991599999833852,
+          "seconds_per_op": 0.000000600035096748611,
+          "ops_per_second": 1666569.1814006625,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 212312,
+          "elapsed_seconds": 0.09693699982017279,
+          "seconds_per_op": 0.0000004565780540910207,
+          "ops_per_second": 2190206.014152064,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 190246,
+          "elapsed_seconds": 0.09823500015772879,
+          "seconds_per_op": 0.0000005163577691921448,
+          "ops_per_second": 1936641.7233627103,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 192000,
+          "elapsed_seconds": 0.10033600009046495,
+          "seconds_per_op": 0.000000522583333804505,
+          "ops_per_second": 1913570.4017191133,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 222272,
+          "elapsed_seconds": 0.09682900016196072,
+          "seconds_per_op": 0.00000043563291895497733,
+          "ops_per_second": 2295510.6386332344,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 65322,
+          "elapsed_seconds": 0.09727200004272163,
+          "seconds_per_op": 0.0000014891154594580942,
+          "ops_per_second": 671539.6000011384,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 18878,
+          "elapsed_seconds": 0.10097200004383922,
+          "seconds_per_op": 0.0000053486598179806765,
+          "ops_per_second": 186962.72225769225,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 117,
+          "elapsed_seconds": 0.09916600002907217,
+          "seconds_per_op": 0.0008475726498211296,
+          "ops_per_second": 1179.8398641237875,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5696,
+          "elapsed_seconds": 0.09652200015261769,
+          "seconds_per_op": 0.000016945575869490465,
+          "ops_per_second": 59012.45302618735,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 605,
+          "elapsed_seconds": 0.10155100002884865,
+          "seconds_per_op": 0.0001678528926096672,
+          "ops_per_second": 5957.597658596482,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 605,
+          "elapsed_seconds": 0.09960600011982024,
+          "seconds_per_op": 0.0001646380167269756,
+          "ops_per_second": 6073.931281973176,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 159,
+          "elapsed_seconds": 0.10004799999296665,
+          "seconds_per_op": 0.0006292327043582809,
+          "ops_per_second": 1589.237166271966,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 160,
+          "elapsed_seconds": 0.10140099981799722,
+          "seconds_per_op": 0.0006337562488624826,
+          "ops_per_second": 1577.8937119671507,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.09853200009092689,
+          "seconds_per_op": 0.002526461540792997,
+          "ops_per_second": 395.8104977470282,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.09898000000976026,
+          "seconds_per_op": 0.002537948718198981,
+          "ops_per_second": 394.0189936972547,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1658550000283867,
+          "seconds_per_op": 0.01036593750177417,
+          "ops_per_second": 96.46980794827735,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.16720400005578995,
+          "seconds_per_op": 0.010450250003486872,
+          "ops_per_second": 95.69149060226655,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 131,
+          "elapsed_seconds": 0.09885800001211464,
+          "seconds_per_op": 0.000754641221466524,
+          "ops_per_second": 1325.1330189154796,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1920799999497831,
+          "seconds_per_op": 0.012004999996861443,
+          "ops_per_second": 83.29862559445543,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 2.97381899994798,
+          "seconds_per_op": 0.18586368749674875,
+          "ops_per_second": 5.3802870989390685,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 257905,
+          "elapsed_seconds": 0.09481399995274842,
+          "seconds_per_op": 0.000000367631492032913,
+          "ops_per_second": 2720115.1742203655,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 117045,
+          "elapsed_seconds": 0.09531200001947582,
+          "seconds_per_op": 0.000000814319279076217,
+          "ops_per_second": 1228019.5565729742,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 142180,
+          "elapsed_seconds": 0.09971500001847744,
+          "seconds_per_op": 0.0000007013293010161587,
+          "ops_per_second": 1425863.711313781,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 129159,
+          "elapsed_seconds": 0.09838400012813509,
+          "seconds_per_op": 0.0000007617277938675205,
+          "ops_per_second": 1312804.925920715,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 120523,
+          "elapsed_seconds": 0.09685499989427626,
+          "seconds_per_op": 0.0000008036225441971762,
+          "ops_per_second": 1244365.2896758965,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 166490,
+          "elapsed_seconds": 0.09716699994169176,
+          "seconds_per_op": 0.0000005836206375259281,
+          "ops_per_second": 1713441.8074027991,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 105470,
+          "elapsed_seconds": 0.09844999993219972,
+          "seconds_per_op": 0.0000009334407882070704,
+          "ops_per_second": 1071305.231819551,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 122568,
+          "elapsed_seconds": 0.09668299998156726,
+          "seconds_per_op": 0.0000007888111087850602,
+          "ops_per_second": 1267730.6250671549,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 65917,
+          "elapsed_seconds": 0.09760900004766881,
+          "seconds_per_op": 0.0000014807864442809717,
+          "ops_per_second": 675316.8249629486,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 134824,
+          "elapsed_seconds": 0.09930199990049005,
+          "seconds_per_op": 0.0000007365305872877977,
+          "ops_per_second": 1357716.8650692469,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 36921,
+          "elapsed_seconds": 0.09452600008808076,
+          "seconds_per_op": 0.0000025602231816061526,
+          "ops_per_second": 390590.94815814117,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 105010,
+          "elapsed_seconds": 0.09789999993517995,
+          "seconds_per_op": 0.000000932292162033901,
+          "ops_per_second": 1072625.1283914975,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 151464,
+          "elapsed_seconds": 0.09462900017388165,
+          "seconds_per_op": 0.0000006247623209071572,
+          "ops_per_second": 1600608.6899542795,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 211971,
+          "elapsed_seconds": 0.09978600009344518,
+          "seconds_per_op": 0.00000047075307515388983,
+          "ops_per_second": 2124255.9056530828,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 182211,
+          "elapsed_seconds": 0.09942700015380979,
+          "seconds_per_op": 0.0000005456695817146593,
+          "ops_per_second": 1832610.8573941335,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 188046,
+          "elapsed_seconds": 0.09879099996760488,
+          "seconds_per_op": 0.0000005253554979505274,
+          "ops_per_second": 1903472.989054299,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 215751,
+          "elapsed_seconds": 0.09956900007091463,
+          "seconds_per_op": 0.0000004614995994035468,
+          "ops_per_second": 2166849.1181626683,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 63142,
+          "elapsed_seconds": 0.09815299999900162,
+          "seconds_per_op": 0.0000015544803775458748,
+          "ops_per_second": 643301.7839560916,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 18501,
+          "elapsed_seconds": 0.10050699999555945,
+          "seconds_per_op": 0.000005432517160994511,
+          "ops_per_second": 184076.7309820948,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 118,
+          "elapsed_seconds": 0.10278899990953505,
+          "seconds_per_op": 0.0008710932195723309,
+          "ops_per_second": 1147.9827618115967,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5567,
+          "elapsed_seconds": 0.09839900000952184,
+          "seconds_per_op": 0.00001767540865987459,
+          "ops_per_second": 56575.77820365343,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 572,
+          "elapsed_seconds": 0.09905799990519881,
+          "seconds_per_op": 0.00017317832151258534,
+          "ops_per_second": 5774.394804532894,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 577,
+          "elapsed_seconds": 0.105178999947384,
+          "seconds_per_op": 0.00018228596178056152,
+          "ops_per_second": 5485.885968574006,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 149,
+          "elapsed_seconds": 0.09978000004775822,
+          "seconds_per_op": 0.0006696644298507263,
+          "ops_per_second": 1493.2852267857622,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 151,
+          "elapsed_seconds": 0.0990120000205934,
+          "seconds_per_op": 0.0006557086094079033,
+          "ops_per_second": 1525.0676682482292,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.10249900002963841,
+          "seconds_per_op": 0.0026281794879394462,
+          "ops_per_second": 380.4915168803875,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 38,
+          "elapsed_seconds": 0.1018769999500364,
+          "seconds_per_op": 0.002680973682895695,
+          "ops_per_second": 372.9988124761856,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17601900012232363,
+          "seconds_per_op": 0.011001187507645227,
+          "ops_per_second": 90.89927785569098,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17681999993510544,
+          "seconds_per_op": 0.01105124999594409,
+          "ops_per_second": 90.48750144707695,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 129,
+          "elapsed_seconds": 0.11699100001715124,
+          "seconds_per_op": 0.0009069069768771413,
+          "ops_per_second": 1102.648921550275,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.19765900005586445,
+          "seconds_per_op": 0.012353687503491528,
+          "ops_per_second": 80.94749035195925,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 3.1275480000767857,
+          "seconds_per_op": 0.1954717500047991,
+          "ops_per_second": 5.115828757738387,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 263377,
+          "elapsed_seconds": 0.09703000006265938,
+          "seconds_per_op": 0.000000368407264349808,
+          "ops_per_second": 2714387.3011431326,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 119065,
+          "elapsed_seconds": 0.09719799994491041,
+          "seconds_per_op": 0.000000816344013311304,
+          "ops_per_second": 1224973.7655865687,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 140024,
+          "elapsed_seconds": 0.09689300018362701,
+          "seconds_per_op": 0.0000006919742343000273,
+          "ops_per_second": 1445140.513087975,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 136045,
+          "elapsed_seconds": 0.09556200006045401,
+          "seconds_per_op": 0.0000007024293436763866,
+          "ops_per_second": 1423630.7309802622,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 127774,
+          "elapsed_seconds": 0.10197099996730685,
+          "seconds_per_op": 0.0000007980575075313198,
+          "ops_per_second": 1253042.5321019301,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 170205,
+          "elapsed_seconds": 0.0968499998562038,
+          "seconds_per_op": 0.000000569019710679497,
+          "ops_per_second": 1757408.3660579107,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 105566,
+          "elapsed_seconds": 0.09715700009837747,
+          "seconds_per_op": 0.0000009203436721896961,
+          "ops_per_second": 1086550.6334397718,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 124380,
+          "elapsed_seconds": 0.0998220001347363,
+          "seconds_per_op": 0.0000008025566822217101,
+          "ops_per_second": 1246017.91020132,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 65381,
+          "elapsed_seconds": 0.09751500003039837,
+          "seconds_per_op": 0.0000014914883533503369,
+          "ops_per_second": 670471.2093484979,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 135547,
+          "elapsed_seconds": 0.09795999992638826,
+          "seconds_per_op": 0.0000007227013502798901,
+          "ops_per_second": 1383697.4285612125,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 38960,
+          "elapsed_seconds": 0.09742700005881488,
+          "seconds_per_op": 0.0000025006930199901153,
+          "ops_per_second": 399889.14753077243,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 102566,
+          "elapsed_seconds": 0.0977449999190867,
+          "seconds_per_op": 0.0000009529961187828978,
+          "ops_per_second": 1049322.2168387552,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 155476,
+          "elapsed_seconds": 0.09877799986861646,
+          "seconds_per_op": 0.0000006353263517752995,
+          "ops_per_second": 1573994.211330427,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 202024,
+          "elapsed_seconds": 0.09717300022020936,
+          "seconds_per_op": 0.0000004809973083406395,
+          "ops_per_second": 2079013.7130908968,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 181198,
+          "elapsed_seconds": 0.09873500000685453,
+          "seconds_per_op": 0.0000005449011578872534,
+          "ops_per_second": 1835195.219399611,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 186122,
+          "elapsed_seconds": 0.0979470000602305,
+          "seconds_per_op": 0.0000005262515987375511,
+          "ops_per_second": 1900231.7568230585,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 217920,
+          "elapsed_seconds": 0.09737000009045005,
+          "seconds_per_op": 0.00000044681534549582437,
+          "ops_per_second": 2238061.0023371396,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 61236,
+          "elapsed_seconds": 0.09537200001068413,
+          "seconds_per_op": 0.000001557449866266316,
+          "ops_per_second": 642075.2421375244,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 18648,
+          "elapsed_seconds": 0.10097600007429719,
+          "seconds_per_op": 0.000005414843418827605,
+          "ops_per_second": 184677.54700403044,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 116,
+          "elapsed_seconds": 0.1002190001308918,
+          "seconds_per_op": 0.0008639568976801017,
+          "ops_per_second": 1157.4651498068959,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5499,
+          "elapsed_seconds": 0.0969030000269413,
+          "seconds_per_op": 0.00001762193126512844,
+          "ops_per_second": 56747.46910282601,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 575,
+          "elapsed_seconds": 0.10106399981305003,
+          "seconds_per_op": 0.0001757634779357392,
+          "ops_per_second": 5689.464112479668,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 579,
+          "elapsed_seconds": 0.09942300012335181,
+          "seconds_per_op": 0.0001717150261197786,
+          "ops_per_second": 5823.602177379964,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 155,
+          "elapsed_seconds": 0.10154699999839067,
+          "seconds_per_op": 0.0006551419354734882,
+          "ops_per_second": 1526.3867962860197,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 151,
+          "elapsed_seconds": 0.10135199991054833,
+          "seconds_per_op": 0.0006712052974208499,
+          "ops_per_second": 1489.8571328959488,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 37,
+          "elapsed_seconds": 0.09755399986170232,
+          "seconds_per_op": 0.0026365945908568196,
+          "ops_per_second": 379.2771188516426,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 38,
+          "elapsed_seconds": 0.09929000004194677,
+          "seconds_per_op": 0.0026128947379459675,
+          "ops_per_second": 382.7172926170435,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17506499984301627,
+          "seconds_per_op": 0.010941562490188517,
+          "ops_per_second": 91.3946249355809,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17493199999444187,
+          "seconds_per_op": 0.010933249999652617,
+          "ops_per_second": 91.46411177205069,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 132,
+          "elapsed_seconds": 0.09968400001525879,
+          "seconds_per_op": 0.000755181818297415,
+          "ops_per_second": 1324.184422573277,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.19474799977615476,
+          "seconds_per_op": 0.012171749986009672,
+          "ops_per_second": 82.15745485648405,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 3.056006999919191,
+          "seconds_per_op": 0.19100043749494944,
+          "ops_per_second": 5.2355901018626865,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku/rinku.bundle": "d7e7f9070ab9a86e89b58e69ece77593128178a5878cb55f9e5671868581e5b9"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 258460,
+          "elapsed_seconds": 0.0963429999537766,
+          "seconds_per_op": 0.00000037275787337992956,
+          "ops_per_second": 2682706.580903686,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 115303,
+          "elapsed_seconds": 0.09668700001202524,
+          "seconds_per_op": 0.0000008385471324425664,
+          "ops_per_second": 1192538.8106535464,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 128327,
+          "elapsed_seconds": 0.09312099986709654,
+          "seconds_per_op": 0.0000007256539922782933,
+          "ops_per_second": 1378067.2478082268,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 134288,
+          "elapsed_seconds": 0.0986160000320524,
+          "seconds_per_op": 0.0000007343619685456064,
+          "ops_per_second": 1361726.2914370224,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 121662,
+          "elapsed_seconds": 0.10020700003951788,
+          "seconds_per_op": 0.0000008236507704913439,
+          "ops_per_second": 1214106.7984474245,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 165289,
+          "elapsed_seconds": 0.09671499999240041,
+          "seconds_per_op": 0.0000005851266569003407,
+          "ops_per_second": 1709031.691185317,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 105867,
+          "elapsed_seconds": 0.09804300009272993,
+          "seconds_per_op": 0.0000009260959514554104,
+          "ops_per_second": 1079801.7186323355,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 118896,
+          "elapsed_seconds": 0.09579199994914234,
+          "seconds_per_op": 0.0000008056789122354186,
+          "ops_per_second": 1241189.244019584,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 66586,
+          "elapsed_seconds": 0.09771699993871152,
+          "seconds_per_op": 0.0000014675307112412748,
+          "ops_per_second": 681416.7446991106,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 136470,
+          "elapsed_seconds": 0.09789799991995096,
+          "seconds_per_op": 0.0000007173591259613905,
+          "ops_per_second": 1394001.92150594,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 38535,
+          "elapsed_seconds": 0.10044399998150766,
+          "seconds_per_op": 0.0000026065654594915704,
+          "ops_per_second": 383646.6091264239,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 101476,
+          "elapsed_seconds": 0.09784800000488758,
+          "seconds_per_op": 0.00000096424770393874,
+          "ops_per_second": 1037077.9167170632,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 154958,
+          "elapsed_seconds": 0.09947700006887317,
+          "seconds_per_op": 0.0000006419610479541113,
+          "ops_per_second": 1557726.910669948,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 193745,
+          "elapsed_seconds": 0.09604800003580749,
+          "seconds_per_op": 0.0000004957444064920771,
+          "ops_per_second": 2017168.4983317743,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 177042,
+          "elapsed_seconds": 0.09628900000825524,
+          "seconds_per_op": 0.0000005438765943010995,
+          "ops_per_second": 1838652.3900426994,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 175055,
+          "elapsed_seconds": 0.0976579999551177,
+          "seconds_per_op": 0.000000557870383337338,
+          "ops_per_second": 1792531.0786669082,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 210504,
+          "elapsed_seconds": 0.09658399992622435,
+          "seconds_per_op": 0.00000045882263484885963,
+          "ops_per_second": 2179491.4288162985,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 60893,
+          "elapsed_seconds": 0.09825999988242984,
+          "seconds_per_op": 0.000001613650171323959,
+          "ops_per_second": 619713.00705129,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 18086,
+          "elapsed_seconds": 0.09844299987889826,
+          "seconds_per_op": 0.00000544304986613393,
+          "ops_per_second": 183720.52885678897,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 113,
+          "elapsed_seconds": 0.09772399999201298,
+          "seconds_per_op": 0.0008648141592213538,
+          "ops_per_second": 1156.317793062457,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 4928,
+          "elapsed_seconds": 0.09352400014176965,
+          "seconds_per_op": 0.000018978084444352607,
+          "ops_per_second": 52692.35696216825,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 557,
+          "elapsed_seconds": 0.09818000020459294,
+          "seconds_per_op": 0.00017626570952350619,
+          "ops_per_second": 5673.2531965705075,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 572,
+          "elapsed_seconds": 0.09946199995465577,
+          "seconds_per_op": 0.00017388461530534226,
+          "ops_per_second": 5750.940060131225,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 147,
+          "elapsed_seconds": 0.10172299994155765,
+          "seconds_per_op": 0.0006919931968813446,
+          "ops_per_second": 1445.1009121285756,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 150,
+          "elapsed_seconds": 0.10111699998378754,
+          "seconds_per_op": 0.0006741133332252503,
+          "ops_per_second": 1483.4300861778936,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 35,
+          "elapsed_seconds": 0.09513600007630885,
+          "seconds_per_op": 0.0027181714307516814,
+          "ops_per_second": 367.8943824832493,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 37,
+          "elapsed_seconds": 0.10165000008419156,
+          "seconds_per_op": 0.0027472972995727448,
+          "ops_per_second": 363.9940970915373,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.17582700005732477,
+          "seconds_per_op": 0.010989187503582798,
+          "ops_per_second": 90.99853830630978,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1922420000191778,
+          "seconds_per_op": 0.012015125001198612,
+          "ops_per_second": 83.22843082366946,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 130,
+          "elapsed_seconds": 0.10019099991768599,
+          "seconds_per_op": 0.0007706999993668152,
+          "ops_per_second": 1297.521734555042,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 16,
+          "elapsed_seconds": 0.19226799998432398,
+          "seconds_per_op": 0.012016749999020249,
+          "ops_per_second": 83.21717603191647,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 16,
+          "elapsed_seconds": 3.0562469998840243,
+          "seconds_per_op": 0.19101543749275152,
+          "ops_per_second": 5.235178963155515,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    }
+  ],
+  "rust": [
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 468099,
+          "elapsed_seconds": 0.09503299999050796,
+          "seconds_per_op": 0.00000020301901946064393,
+          "ops_per_second": 4925646.881049261,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 141072,
+          "elapsed_seconds": 0.09406699985265732,
+          "seconds_per_op": 0.0000006668013486209689,
+          "ops_per_second": 1499697.026810352,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 152343,
+          "elapsed_seconds": 0.09666799986734986,
+          "seconds_per_op": 0.0000006345417896939792,
+          "ops_per_second": 1575940.3340200346,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 180302,
+          "elapsed_seconds": 0.10027100006118417,
+          "seconds_per_op": 0.0000005561280521635044,
+          "ops_per_second": 1798147.0204743333,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 151261,
+          "elapsed_seconds": 0.09754700004123151,
+          "seconds_per_op": 0.0000006448919420156651,
+          "ops_per_second": 1550647.3795817858,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 188326,
+          "elapsed_seconds": 0.0969020000193268,
+          "seconds_per_op": 0.0000005145439292467679,
+          "ops_per_second": 1943468.6586699858,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 134667,
+          "elapsed_seconds": 0.09518399997614324,
+          "seconds_per_op": 0.0000007068101314809363,
+          "ops_per_second": 1414807.1107933342,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 139405,
+          "elapsed_seconds": 0.09789999993517995,
+          "seconds_per_op": 0.0000007022703628648897,
+          "ops_per_second": 1423953.014221662,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 72863,
+          "elapsed_seconds": 0.0941469999961555,
+          "seconds_per_op": 0.0000012921098499396881,
+          "ops_per_second": 773928.0062346688,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 186794,
+          "elapsed_seconds": 0.0964289999101311,
+          "seconds_per_op": 0.000000516231784265721,
+          "ops_per_second": 1937114.3553711679,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 52335,
+          "elapsed_seconds": 0.09634399996139109,
+          "seconds_per_op": 0.0000018409095244366311,
+          "ops_per_second": 543209.748619247,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 127549,
+          "elapsed_seconds": 0.09524499997496605,
+          "seconds_per_op": 0.0000007467326280485622,
+          "ops_per_second": 1339167.410714732,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 190338,
+          "elapsed_seconds": 0.09777099988423288,
+          "seconds_per_op": 0.0000005136704172799592,
+          "ops_per_second": 1946773.585473938,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 257504,
+          "elapsed_seconds": 0.10079100006259978,
+          "seconds_per_op": 0.00000039141527922905965,
+          "ops_per_second": 2554831.2829525266,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 213359,
+          "elapsed_seconds": 0.09805799997411668,
+          "seconds_per_op": 0.00000045959158026667113,
+          "ops_per_second": 2175844.9086899394,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 200716,
+          "elapsed_seconds": 0.09577100002206862,
+          "seconds_per_op": 0.0000004771468145143817,
+          "ops_per_second": 2095791.0009684432,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 232215,
+          "elapsed_seconds": 0.09643499995581806,
+          "seconds_per_op": 0.00000041528325024575526,
+          "ops_per_second": 2407995.023657281,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 86191,
+          "elapsed_seconds": 0.09593600011430681,
+          "seconds_per_op": 0.0000011130628501155204,
+          "ops_per_second": 898421.8635059234,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 107744,
+          "elapsed_seconds": 0.09959400002844632,
+          "seconds_per_op": 0.0000009243577371217545,
+          "ops_per_second": 1081832.238580897,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 152,
+          "elapsed_seconds": 0.10061400011181831,
+          "seconds_per_op": 0.0006619342112619625,
+          "ops_per_second": 1510.7241520173473,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5617,
+          "elapsed_seconds": 0.09679299988783896,
+          "seconds_per_op": 0.000017232152374548506,
+          "ops_per_second": 58031.056032035616,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 584,
+          "elapsed_seconds": 0.09453699993900955,
+          "seconds_per_op": 0.00016187842455309855,
+          "ops_per_second": 6177.475489774025,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 638,
+          "elapsed_seconds": 0.10222300002351403,
+          "seconds_per_op": 0.00016022413796789033,
+          "ops_per_second": 6241.256858566496,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 159,
+          "elapsed_seconds": 0.09938299981877208,
+          "seconds_per_op": 0.0006250503133256105,
+          "ops_per_second": 1599.8712082543427,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 163,
+          "elapsed_seconds": 0.10064399987459183,
+          "seconds_per_op": 0.000617447851991361,
+          "ops_per_second": 1619.5699714151594,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 40,
+          "elapsed_seconds": 0.09999900008551776,
+          "seconds_per_op": 0.002499975002137944,
+          "ops_per_second": 400.0039996979225,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 41,
+          "elapsed_seconds": 0.10143299982883036,
+          "seconds_per_op": 0.002473975605581228,
+          "ops_per_second": 404.2077042894136,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.16537299985066056,
+          "seconds_per_op": 0.010335812490666285,
+          "ops_per_second": 96.75098120278847,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.15893999999389052,
+          "seconds_per_op": 0.009933749999618158,
+          "ops_per_second": 100.66691833783203,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4739,
+          "elapsed_seconds": 0.09938200004398823,
+          "seconds_per_op": 0.000020971090956739444,
+          "ops_per_second": 47684.69137170146,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1203,
+          "elapsed_seconds": 0.10100199980661273,
+          "seconds_per_op": 0.00008395843707947858,
+          "ops_per_second": 11910.655257354994,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 294,
+          "elapsed_seconds": 0.09890999994240701,
+          "seconds_per_op": 0.00033642857123267694,
+          "ops_per_second": 2972.3991524738585,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 450986,
+          "elapsed_seconds": 0.09195300005376339,
+          "seconds_per_op": 0.00000020389324735970382,
+          "ops_per_second": 4904527.30999876,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 141328,
+          "elapsed_seconds": 0.10239499993622303,
+          "seconds_per_op": 0.000000724520264464388,
+          "ops_per_second": 1380223.6445922798,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 147232,
+          "elapsed_seconds": 0.098031000001356,
+          "seconds_per_op": 0.0000006658267224608509,
+          "ops_per_second": 1501892.2585504935,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 167254,
+          "elapsed_seconds": 0.09568000002764165,
+          "seconds_per_op": 0.0000005720640464661034,
+          "ops_per_second": 1748056.0195618817,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 148134,
+          "elapsed_seconds": 0.09774700016714633,
+          "seconds_per_op": 0.0000006598552673062655,
+          "ops_per_second": 1515483.8485753266,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 189533,
+          "elapsed_seconds": 0.09792299987748265,
+          "seconds_per_op": 0.0000005166540912531467,
+          "ops_per_second": 1935530.9808434802,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 138334,
+          "elapsed_seconds": 0.09872699994593859,
+          "seconds_per_op": 0.0000007136857167864631,
+          "ops_per_second": 1401176.9837607706,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 135280,
+          "elapsed_seconds": 0.09733399981632829,
+          "seconds_per_op": 0.0000007195002943253126,
+          "ops_per_second": 1389853.4967768383,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 73590,
+          "elapsed_seconds": 0.09694899991154671,
+          "seconds_per_op": 0.0000013174208440215615,
+          "ops_per_second": 759058.8873236574,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 183069,
+          "elapsed_seconds": 0.09963400010019541,
+          "seconds_per_op": 0.0000005442428816467857,
+          "ops_per_second": 1837414.9368277844,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 52227,
+          "elapsed_seconds": 0.09780799993313849,
+          "seconds_per_op": 0.000001872747811153972,
+          "ops_per_second": 533974.7263588087,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 125982,
+          "elapsed_seconds": 0.09307099995203316,
+          "seconds_per_op": 0.0000007387642675305453,
+          "ops_per_second": 1353611.7594624371,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 180118,
+          "elapsed_seconds": 0.09678400005213916,
+          "seconds_per_op": 0.0000005373366351621668,
+          "ops_per_second": 1861030.7478815445,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 247932,
+          "elapsed_seconds": 0.09716699994169176,
+          "seconds_per_op": 0.00000039190987827989833,
+          "ops_per_second": 2551607.0286082695,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 201832,
+          "elapsed_seconds": 0.09319099993444979,
+          "seconds_per_op": 0.00000046172559323818714,
+          "ops_per_second": 2165788.543335385,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 199569,
+          "elapsed_seconds": 0.09697500010952353,
+          "seconds_per_op": 0.00000048592216280847,
+          "ops_per_second": 2057942.7664305938,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 227068,
+          "elapsed_seconds": 0.09969100006856024,
+          "seconds_per_op": 0.00000043903588382581534,
+          "ops_per_second": 2277718.1475142096,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 82044,
+          "elapsed_seconds": 0.09578999993391335,
+          "seconds_per_op": 0.0000011675442437462014,
+          "ops_per_second": 856498.5912579927,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 106964,
+          "elapsed_seconds": 0.09739400004036725,
+          "seconds_per_op": 0.0000009105306462021545,
+          "ops_per_second": 1098260.6726868825,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 153,
+          "elapsed_seconds": 0.09844000008888543,
+          "seconds_per_op": 0.000643398693391408,
+          "ops_per_second": 1554.2462399619073,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5638,
+          "elapsed_seconds": 0.09721899987198412,
+          "seconds_per_op": 0.000017243526050369657,
+          "ops_per_second": 57992.779265616766,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 632,
+          "elapsed_seconds": 0.09994099987670779,
+          "seconds_per_op": 0.00015813449347580347,
+          "ops_per_second": 6323.731009092032,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 646,
+          "elapsed_seconds": 0.1044709999114275,
+          "seconds_per_op": 0.00016171981410437693,
+          "ops_per_second": 6183.5341917631795,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 157,
+          "elapsed_seconds": 0.09835400013253093,
+          "seconds_per_op": 0.0006264585995702607,
+          "ops_per_second": 1596.274679102469,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 161,
+          "elapsed_seconds": 0.10024999990127981,
+          "seconds_per_op": 0.0006226708068402473,
+          "ops_per_second": 1605.9850389879616,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.09582000016234815,
+          "seconds_per_op": 0.00245692308108585,
+          "ops_per_second": 407.0131489660005,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 40,
+          "elapsed_seconds": 0.09982300014235079,
+          "seconds_per_op": 0.00249557500355877,
+          "ops_per_second": 400.709254810602,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.15995400003157556,
+          "seconds_per_op": 0.009997125001973473,
+          "ops_per_second": 100.02875824825597,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.16063700011000037,
+          "seconds_per_op": 0.010039812506875023,
+          "ops_per_second": 99.60345368155271,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4798,
+          "elapsed_seconds": 0.10177399986423552,
+          "seconds_per_op": 0.000021211754869578057,
+          "ops_per_second": 47143.671334529805,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1175,
+          "elapsed_seconds": 0.09833800001069903,
+          "seconds_per_op": 0.00008369191490272259,
+          "ops_per_second": 11948.585489558072,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 296,
+          "elapsed_seconds": 0.10078099998645484,
+          "seconds_per_op": 0.00034047635130559067,
+          "ops_per_second": 2937.061549694714,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 458163,
+          "elapsed_seconds": 0.09443300007842481,
+          "seconds_per_op": 0.00000020611223533638642,
+          "ops_per_second": 4851725.558009428,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 145083,
+          "elapsed_seconds": 0.0976589999627322,
+          "seconds_per_op": 0.0000006731250385140382,
+          "ops_per_second": 1485608.0858432439,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 149257,
+          "elapsed_seconds": 0.09727900009602308,
+          "seconds_per_op": 0.0000006517550272082588,
+          "ops_per_second": 1534318.8134404134,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 173007,
+          "elapsed_seconds": 0.09715400007553399,
+          "seconds_per_op": 0.0000005615610933403503,
+          "ops_per_second": 1780750.1478631126,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 146002,
+          "elapsed_seconds": 0.09786499990150332,
+          "seconds_per_op": 0.0000006702990363248676,
+          "ops_per_second": 1491871.4570780604,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 191421,
+          "elapsed_seconds": 0.09759200015105307,
+          "seconds_per_op": 0.0000005098291208961037,
+          "ops_per_second": 1961441.5085633888,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 137366,
+          "elapsed_seconds": 0.09763700002804399,
+          "seconds_per_op": 0.0000007107799603107318,
+          "ops_per_second": 1406905.168742841,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 139475,
+          "elapsed_seconds": 0.09807499987073243,
+          "seconds_per_op": 0.0000007031726106523207,
+          "ops_per_second": 1422125.9259121567,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 73848,
+          "elapsed_seconds": 0.09544100007042289,
+          "seconds_per_op": 0.0000012923978993394931,
+          "ops_per_second": 773755.513306754,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 188768,
+          "elapsed_seconds": 0.0981710001360625,
+          "seconds_per_op": 0.00000052006166371452,
+          "ops_per_second": 1922848.9038348633,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 53324,
+          "elapsed_seconds": 0.09972600010223687,
+          "seconds_per_op": 0.000001870189785129339,
+          "ops_per_second": 534705.0914037806,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 131654,
+          "elapsed_seconds": 0.09673199988901615,
+          "seconds_per_op": 0.0000007347441011212432,
+          "ops_per_second": 1361018.0721069658,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 191810,
+          "elapsed_seconds": 0.09971800004132092,
+          "seconds_per_op": 0.0000005198790471889939,
+          "ops_per_second": 1923524.337837885,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 253356,
+          "elapsed_seconds": 0.09637899999506772,
+          "seconds_per_op": 0.00000038040938440403116,
+          "ops_per_second": 2628746.926332144,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 214799,
+          "elapsed_seconds": 0.09589200001209974,
+          "seconds_per_op": 0.00000044642665939832,
+          "ops_per_second": 2240009.5938440794,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 210356,
+          "elapsed_seconds": 0.09722200012765825,
+          "seconds_per_op": 0.00000046217840293435056,
+          "ops_per_second": 2163666.6569684856,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 236169,
+          "elapsed_seconds": 0.09676799993030727,
+          "seconds_per_op": 0.00000040974048215602926,
+          "ops_per_second": 2440569.1981862797,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 85996,
+          "elapsed_seconds": 0.09856699989177287,
+          "seconds_per_op": 0.0000011461812164725438,
+          "ops_per_second": 872462.3869492233,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 107181,
+          "elapsed_seconds": 0.09911799989640713,
+          "seconds_per_op": 0.0000009247721134940626,
+          "ops_per_second": 1081347.4859462448,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 150,
+          "elapsed_seconds": 0.09721799986436963,
+          "seconds_per_op": 0.0006481199990957976,
+          "ops_per_second": 1542.9241520013513,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5563,
+          "elapsed_seconds": 0.09590700012631714,
+          "seconds_per_op": 0.000017240158210734702,
+          "ops_per_second": 58004.1080700375,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 622,
+          "elapsed_seconds": 0.10085699986666441,
+          "seconds_per_op": 0.00016214951747052156,
+          "ops_per_second": 6167.147553687897,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 626,
+          "elapsed_seconds": 0.09884299989789724,
+          "seconds_per_op": 0.00015789616597108186,
+          "ops_per_second": 6333.276009901004,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 158,
+          "elapsed_seconds": 0.10221599997021258,
+          "seconds_per_op": 0.0006469367086722315,
+          "ops_per_second": 1545.7462632664533,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 163,
+          "elapsed_seconds": 0.1026799997780472,
+          "seconds_per_op": 0.0006299386489450749,
+          "ops_per_second": 1587.45617795423,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 40,
+          "elapsed_seconds": 0.10139399999752641,
+          "seconds_per_op": 0.00253484999993816,
+          "ops_per_second": 394.500660798231,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 41,
+          "elapsed_seconds": 0.10245799995027483,
+          "seconds_per_op": 0.0024989756085432883,
+          "ops_per_second": 400.16396982078726,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.16115100006572902,
+          "seconds_per_op": 0.010071937504108064,
+          "ops_per_second": 99.28576300161987,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1628290000371635,
+          "seconds_per_op": 0.010176812502322719,
+          "ops_per_second": 98.26259447855246,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4834,
+          "elapsed_seconds": 0.10010999999940395,
+          "seconds_per_op": 0.00002070955730231774,
+          "ops_per_second": 48286.88442741765,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1199,
+          "elapsed_seconds": 0.10056099994108081,
+          "seconds_per_op": 0.00008387072555553028,
+          "ops_per_second": 11923.111352338383,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 297,
+          "elapsed_seconds": 0.10042700008489192,
+          "seconds_per_op": 0.0003381380474238785,
+          "ops_per_second": 2957.372018968435,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 526796,
+          "elapsed_seconds": 0.09464300004765391,
+          "seconds_per_op": 0.00000017965778033176772,
+          "ops_per_second": 5566138.010573965,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 154036,
+          "elapsed_seconds": 0.09487999998964369,
+          "seconds_per_op": 0.0000006159599054094088,
+          "ops_per_second": 1623482.2936004773,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 167468,
+          "elapsed_seconds": 0.09737199987284839,
+          "seconds_per_op": 0.0000005814364527721618,
+          "ops_per_second": 1719878.406715332,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 189597,
+          "elapsed_seconds": 0.09732699999585748,
+          "seconds_per_op": 0.0000005133361814578157,
+          "ops_per_second": 1948041.1397461116,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 160877,
+          "elapsed_seconds": 0.09794800006784499,
+          "seconds_per_op": 0.0000006088378081879013,
+          "ops_per_second": 1642473.5562601218,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 209984,
+          "elapsed_seconds": 0.09661299991421402,
+          "seconds_per_op": 0.00000046009695935982746,
+          "ops_per_second": 2173454.9200050924,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 149321,
+          "elapsed_seconds": 0.10020200000144541,
+          "seconds_per_op": 0.0000006710509573432097,
+          "ops_per_second": 1490199.7963897532,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 151886,
+          "elapsed_seconds": 0.09566699992865324,
+          "seconds_per_op": 0.0000006298605528399803,
+          "ops_per_second": 1587653.005877407,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 77617,
+          "elapsed_seconds": 0.09534200001507998,
+          "seconds_per_op": 0.0000012283649202504602,
+          "ops_per_second": 814090.3273239867,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 203544,
+          "elapsed_seconds": 0.09762299992144108,
+          "seconds_per_op": 0.0000004796162005337474,
+          "ops_per_second": 2085000.4626347828,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 54999,
+          "elapsed_seconds": 0.09735599998384714,
+          "seconds_per_op": 0.0000017701412750022208,
+          "ops_per_second": 564926.6610083116,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 136982,
+          "elapsed_seconds": 0.10012899991124868,
+          "seconds_per_op": 0.0000007309646516421769,
+          "ops_per_second": 1368055.2099932756,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 193941,
+          "elapsed_seconds": 0.09664699994027615,
+          "seconds_per_op": 0.0000004983319666304502,
+          "ops_per_second": 2006694.4666657788,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 257334,
+          "elapsed_seconds": 0.09689399995841086,
+          "seconds_per_op": 0.00000037653011245467313,
+          "ops_per_second": 2655830.0834979843,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 216020,
+          "elapsed_seconds": 0.0962330000475049,
+          "seconds_per_op": 0.0000004454819000440001,
+          "ops_per_second": 2244760.112366474,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 217419,
+          "elapsed_seconds": 0.09738000016659498,
+          "seconds_per_op": 0.00000044789093946064964,
+          "ops_per_second": 2232686.3794212947,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 247063,
+          "elapsed_seconds": 0.09801800013519824,
+          "seconds_per_op": 0.00000039673281768293205,
+          "ops_per_second": 2520588.0517784585,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 84735,
+          "elapsed_seconds": 0.09645700012333691,
+          "seconds_per_op": 0.0000011383371702760005,
+          "ops_per_second": 878474.3449583928,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 106319,
+          "elapsed_seconds": 0.0982580001000315,
+          "seconds_per_op": 0.0000009241810033957382,
+          "ops_per_second": 1082039.1203948993,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 149,
+          "elapsed_seconds": 0.09732199995778501,
+          "seconds_per_op": 0.0006531677849515772,
+          "ops_per_second": 1531.0001856171386,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5705,
+          "elapsed_seconds": 0.09677200019359589,
+          "seconds_per_op": 0.00001696266436346992,
+          "ops_per_second": 58953.002816795575,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 676,
+          "elapsed_seconds": 0.10029199998825788,
+          "seconds_per_op": 0.00014836094672819215,
+          "ops_per_second": 6740.318271438854,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 678,
+          "elapsed_seconds": 0.09817300015129149,
+          "seconds_per_op": 0.00014479793532638864,
+          "ops_per_second": 6906.175821816124,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 173,
+          "elapsed_seconds": 0.09870700002647936,
+          "seconds_per_op": 0.0005705606937946784,
+          "ops_per_second": 1752.661918137423,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 157,
+          "elapsed_seconds": 0.09367400011979043,
+          "seconds_per_op": 0.0005966496822916588,
+          "ops_per_second": 1676.0253624189018,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 16,
+          "elapsed_seconds": 0.04204199998639524,
+          "seconds_per_op": 0.0026276249991497025,
+          "ops_per_second": 380.57180926639046,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 44,
+          "elapsed_seconds": 0.09988299990072846,
+          "seconds_per_op": 0.0022700681795620107,
+          "ops_per_second": 440.5154034593539,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.15185000002384186,
+          "seconds_per_op": 0.009490625001490116,
+          "ops_per_second": 105.36713860709813,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.14575200015679002,
+          "seconds_per_op": 0.009109500009799376,
+          "ops_per_second": 109.7755089658344,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4794,
+          "elapsed_seconds": 0.09924899996258318,
+          "seconds_per_op": 0.000020702753433997326,
+          "ops_per_second": 48302.753698347944,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1195,
+          "elapsed_seconds": 0.10301399999298155,
+          "seconds_per_op": 0.00008620418409454523,
+          "ops_per_second": 11600.36499972253,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 297,
+          "elapsed_seconds": 0.09954799991101027,
+          "seconds_per_op": 0.00033517845087882245,
+          "ops_per_second": 2983.485356466223,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 518060,
+          "elapsed_seconds": 0.0941329998895526,
+          "seconds_per_op": 0.00000018170289134376827,
+          "ops_per_second": 5503489.749692947,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 150071,
+          "elapsed_seconds": 0.09590700012631714,
+          "seconds_per_op": 0.0000006390775041568134,
+          "ops_per_second": 1564755.4381050868,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 166621,
+          "elapsed_seconds": 0.09673599991947412,
+          "seconds_per_op": 0.0000005805750770879668,
+          "ops_per_second": 1722430.1205208008,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 184199,
+          "elapsed_seconds": 0.09985899995081127,
+          "seconds_per_op": 0.000000542125635594174,
+          "ops_per_second": 1844590.8740397268,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 155322,
+          "elapsed_seconds": 0.09728999994695187,
+          "seconds_per_op": 0.0000006263761730273359,
+          "ops_per_second": 1596484.7372257225,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 205364,
+          "elapsed_seconds": 0.09673500014469028,
+          "seconds_per_op": 0.00000047104166331338637,
+          "ops_per_second": 2122954.4600488874,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 141248,
+          "elapsed_seconds": 0.0961090000346303,
+          "seconds_per_op": 0.0000006804273337295417,
+          "ops_per_second": 1469664.651063949,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 149708,
+          "elapsed_seconds": 0.09521499997936189,
+          "seconds_per_op": 0.0000006360047557870114,
+          "ops_per_second": 1572315.2867977694,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 75281,
+          "elapsed_seconds": 0.09486600011587143,
+          "seconds_per_op": 0.0000012601586072962823,
+          "ops_per_second": 793550.902410243,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 198761,
+          "elapsed_seconds": 0.0970509999897331,
+          "seconds_per_op": 0.0000004882798938913222,
+          "ops_per_second": 2048005.6879478488,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 52978,
+          "elapsed_seconds": 0.09601800004020333,
+          "seconds_per_op": 0.0000018124127003700277,
+          "ops_per_second": 551750.7131768812,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 133704,
+          "elapsed_seconds": 0.09766100021079183,
+          "seconds_per_op": 0.0000007304269147579117,
+          "ops_per_second": 1369062.3658513925,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 196493,
+          "elapsed_seconds": 0.09674700000323355,
+          "seconds_per_op": 0.0000004923686849059943,
+          "ops_per_second": 2030998.3771427814,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 257105,
+          "elapsed_seconds": 0.09484599996358156,
+          "seconds_per_op": 0.00000036889986567193,
+          "ops_per_second": 2710762.711118252,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 223567,
+          "elapsed_seconds": 0.09493999998085201,
+          "seconds_per_op": 0.00000042466016890172525,
+          "ops_per_second": 2354824.099906153,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 215599,
+          "elapsed_seconds": 0.09567200019955635,
+          "seconds_per_op": 0.00000044374974002456575,
+          "ops_per_second": 2253522.4470095253,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 243100,
+          "elapsed_seconds": 0.09749300009571016,
+          "seconds_per_op": 0.0000004010407243756074,
+          "ops_per_second": 2493512.3522852464,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 85562,
+          "elapsed_seconds": 0.10183500009588897,
+          "seconds_per_op": 0.0000011901895712569712,
+          "ops_per_second": 840202.2872237823,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 105693,
+          "elapsed_seconds": 0.09759099991060793,
+          "seconds_per_op": 0.0000009233440238294678,
+          "ops_per_second": 1083019.9516022317,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 149,
+          "elapsed_seconds": 0.09985400014556944,
+          "seconds_per_op": 0.0006701610748024795,
+          "ops_per_second": 1492.1785785525306,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5637,
+          "elapsed_seconds": 0.09776200004853308,
+          "seconds_per_op": 0.000017342912905540727,
+          "ops_per_second": 57660.4406333909,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 601,
+          "elapsed_seconds": 0.09870600001886487,
+          "seconds_per_op": 0.00016423627290992491,
+          "ops_per_second": 6088.788927574167,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 629,
+          "elapsed_seconds": 0.09640099992975593,
+          "seconds_per_op": 0.00015326073120787906,
+          "ops_per_second": 6524.8285853708,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 172,
+          "elapsed_seconds": 0.10349300014786422,
+          "seconds_per_op": 0.0006017034892317687,
+          "ops_per_second": 1661.948148708196,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 176,
+          "elapsed_seconds": 0.10257799993269145,
+          "seconds_per_op": 0.0005828295450721106,
+          "ops_per_second": 1715.7675146277547,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 42,
+          "elapsed_seconds": 0.09811800019815564,
+          "seconds_per_op": 0.0023361428618608486,
+          "ops_per_second": 428.05601332251257,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 45,
+          "elapsed_seconds": 0.10125300008803606,
+          "seconds_per_op": 0.0022500666686230235,
+          "ops_per_second": 444.4312757239195,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.14843399985693395,
+          "seconds_per_op": 0.009277124991058372,
+          "ops_per_second": 107.79201541036001,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1457259999588132,
+          "seconds_per_op": 0.009107874997425824,
+          "ops_per_second": 109.79509493516674,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4721,
+          "elapsed_seconds": 0.09912499994970858,
+          "seconds_per_op": 0.000020996610876871125,
+          "ops_per_second": 47626.73394597948,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1174,
+          "elapsed_seconds": 0.09975100005976856,
+          "seconds_per_op": 0.00008496678028941103,
+          "ops_per_second": 11769.305563819567,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 293,
+          "elapsed_seconds": 0.10074299992993474,
+          "seconds_per_op": 0.0003438327642659889,
+          "ops_per_second": 2908.390659438146,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    },
+    {
+      "metadata": {
+        "ruby": "ruby 3.3.12 (2026-07-16 revision 0581089df9) [arm64-darwin25]",
+        "executable": "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+        "platform": "arm64-darwin25",
+        "yjit": null,
+        "gc_stress": false,
+        "gc_environment": {},
+        "native_library": [
+          "/Users/jury.razumau/rinku/lib/rinku.bundle"
+        ],
+        "native_sha256": {
+          "/Users/jury.razumau/rinku/lib/rinku.bundle": "b2a229a22cb1a6f62f19f2f5b33f4c4ceb0489786369e17a3e0e4068a72f57df"
+        },
+        "sample_seconds": 0.1,
+        "warmup_seconds": 0.05,
+        "fixture_sha256": {
+          "benchmark.json": "0b470e3823e78689ed9b9a2ceb6aa3920b9a8349636c792f8d5c0b375f7c3867",
+          "mail_benchmark.json": "285314a3748d3d243a3bebd960392d2885a0194edcac73838e03e9144ac052b0"
+        }
+      },
+      "measurements": [
+        {
+          "name": "benchmark/plain_text",
+          "iterations": 460174,
+          "elapsed_seconds": 0.09515299997292459,
+          "seconds_per_op": 0.00000020677613244756242,
+          "ops_per_second": 4836148.099701961,
+          "ruby_allocations_per_op": 0.0078125
+        },
+        {
+          "name": "benchmark/punctuated_urls",
+          "iterations": 137078,
+          "elapsed_seconds": 0.09659800003282726,
+          "seconds_per_op": 0.0000007046936782913907,
+          "ops_per_second": 1419056.2946791474,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/short_domain_and_email",
+          "iterations": 143183,
+          "elapsed_seconds": 0.09829400014132261,
+          "seconds_per_op": 0.0000006864921124806898,
+          "ops_per_second": 1456680.975381387,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/existing_anchor_and_unlinked_url",
+          "iterations": 169395,
+          "elapsed_seconds": 0.09826300013810396,
+          "seconds_per_op": 0.0000005800820575465861,
+          "ops_per_second": 1723894.037042665,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/skip_code_and_pre",
+          "iterations": 143294,
+          "elapsed_seconds": 0.09792400011792779,
+          "seconds_per_op": 0.0000006833782301975504,
+          "ops_per_second": 1463318.4901294278,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/escaped_angle_brackets",
+          "iterations": 181355,
+          "elapsed_seconds": 0.09638500004075468,
+          "seconds_per_op": 0.0000005314714236759652,
+          "ops_per_second": 1881568.7080283994,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/balanced_parentheses_and_punctuation",
+          "iterations": 133862,
+          "elapsed_seconds": 0.09762899996712804,
+          "seconds_per_op": 0.0000007293257232607314,
+          "ops_per_second": 1371129.4804317541,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/unicode_multiline_email",
+          "iterations": 131603,
+          "elapsed_seconds": 0.095905999885872,
+          "seconds_per_op": 0.0000007287523831969789,
+          "ops_per_second": 1372208.2054992113,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/html_email_mixed_links",
+          "iterations": 74069,
+          "elapsed_seconds": 0.09690700005739927,
+          "seconds_per_op": 0.000001308334121662224,
+          "ops_per_second": 764330.7496478889,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "benchmark/ticket_reference_is_not_a_link",
+          "iterations": 180430,
+          "elapsed_seconds": 0.09531200001947582,
+          "seconds_per_op": 0.0000005282491826163932,
+          "ops_per_second": 1893045.9959200455,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "benchmark/long_mixed_email",
+          "iterations": 50381,
+          "elapsed_seconds": 0.09674800001084805,
+          "seconds_per_op": 0.0000019203271076566176,
+          "ops_per_second": 520744.61481737025,
+          "ruby_allocations_per_op": 2.0
+        },
+        {
+          "name": "mail_benchmark/http_https_ftp_urls",
+          "iterations": 130907,
+          "elapsed_seconds": 0.10045500006526709,
+          "seconds_per_op": 0.0000007673768405453267,
+          "ops_per_second": 1303140.7089238744,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/www_with_protocol_url_in_same_node",
+          "iterations": 181117,
+          "elapsed_seconds": 0.09547500009648502,
+          "seconds_per_op": 0.0000005271454369081037,
+          "ops_per_second": 1897009.6864830267,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/email_address_is_not_linked",
+          "iterations": 252199,
+          "elapsed_seconds": 0.09900300018489361,
+          "seconds_per_op": 0.0000003925590513241274,
+          "ops_per_second": 2547387.4481480797,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/escaped_query_from_serialized_text_node",
+          "iterations": 209507,
+          "elapsed_seconds": 0.09665099997073412,
+          "seconds_per_op": 0.0000004613258744134283,
+          "ops_per_second": 2167665.105000865,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/parenthesized_url_and_punctuation",
+          "iterations": 202721,
+          "elapsed_seconds": 0.09899300010874867,
+          "seconds_per_op": 0.000000488321388059198,
+          "ops_per_second": 2047831.6626155488,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/unicode_text_node",
+          "iterations": 233664,
+          "elapsed_seconds": 0.09781100018881261,
+          "seconds_per_op": 0.00000041859678935913366,
+          "ops_per_second": 2388933.755394988,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "mail_benchmark/long_mixed_email_text_node",
+          "iterations": 82534,
+          "elapsed_seconds": 0.095564000075683,
+          "seconds_per_op": 0.0000011578743314959047,
+          "ops_per_second": 863651.5835946199,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/no_links",
+          "iterations": 105408,
+          "elapsed_seconds": 0.0980090000666678,
+          "seconds_per_op": 0.0000009298060874570032,
+          "ops_per_second": 1075493.066231665,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/large_input",
+          "iterations": 147,
+          "elapsed_seconds": 0.09961499995552003,
+          "seconds_per_op": 0.000677653060921905,
+          "ops_per_second": 1475.681373946075,
+          "ruby_allocations_per_op": 1.0
+        },
+        {
+          "name": "supplemental/callbacks",
+          "iterations": 5448,
+          "elapsed_seconds": 0.09666700009256601,
+          "seconds_per_op": 0.000017743575641073056,
+          "ops_per_second": 56358.42629628648,
+          "ruby_allocations_per_op": 131.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_1000",
+          "iterations": 593,
+          "elapsed_seconds": 0.09765400015749037,
+          "seconds_per_op": 0.00016467790920318782,
+          "ops_per_second": 6072.459899683024,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_1000",
+          "iterations": 612,
+          "elapsed_seconds": 0.09800400002859533,
+          "seconds_per_op": 0.00016013725494868518,
+          "ops_per_second": 6244.64307397078,
+          "ruby_allocations_per_op": 1003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_4000",
+          "iterations": 152,
+          "elapsed_seconds": 0.09742200002074242,
+          "seconds_per_op": 0.000640934210662779,
+          "ops_per_second": 1560.2225366717703,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_4000",
+          "iterations": 161,
+          "elapsed_seconds": 0.10464300005696714,
+          "seconds_per_op": 0.0006499565220929636,
+          "ops_per_second": 1538.5644516341501,
+          "ruby_allocations_per_op": 4003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_16000",
+          "iterations": 39,
+          "elapsed_seconds": 0.1047340000513941,
+          "seconds_per_op": 0.002685487180804977,
+          "ops_per_second": 372.3719134269891,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_16000",
+          "iterations": 40,
+          "elapsed_seconds": 0.09987100004218519,
+          "seconds_per_op": 0.0024967750010546296,
+          "ops_per_second": 400.5166663306078,
+          "ruby_allocations_per_op": 16003.0
+        },
+        {
+          "name": "supplemental/callbacks_mutable_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.1601720000617206,
+          "seconds_per_op": 0.010010750003857538,
+          "ops_per_second": 99.89261539991114,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/callbacks_frozen_64000",
+          "iterations": 16,
+          "elapsed_seconds": 0.15705400006845593,
+          "seconds_per_op": 0.009815875004278496,
+          "ops_per_second": 101.87578790114227,
+          "ruby_allocations_per_op": 64003.0
+        },
+        {
+          "name": "supplemental/repeated_at_1000",
+          "iterations": 4758,
+          "elapsed_seconds": 0.10113000008277595,
+          "seconds_per_op": 0.000021254728895076912,
+          "ops_per_second": 47048.35356576217,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_4000",
+          "iterations": 1173,
+          "elapsed_seconds": 0.09956700005568564,
+          "seconds_per_op": 0.00008488235298864932,
+          "ops_per_second": 11781.01177442292,
+          "ruby_allocations_per_op": 0.0
+        },
+        {
+          "name": "supplemental/repeated_at_16000",
+          "iterations": 286,
+          "elapsed_seconds": 0.10042700008489192,
+          "seconds_per_op": 0.0003511433569401815,
+          "ops_per_second": 2847.839721969604,
+          "ruby_allocations_per_op": 0.0
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-10-19T14:51:05Z",
+    "revision": "fe609364e41c0904d932017645cd4e1d58162604",
+    "worktree_diff_sha256": "47b05a7c6c51980753a37845c87b2a104499d62bca8d48ac4aaa78f1940d70a2",
+    "source_sha256": {
+      "Cargo.lock": "570da1f2fc8fada0066b73251eb90f1f576788d7422d181dd2017df4ba625879",
+      "Cargo.toml": "7d441b11dd7a9fe41cf3c88e9add85b034894267d699266bcb2fbc93c7d239a0",
+      "crates/rinku-core/Cargo.toml": "1d47e41b3a57e0ca3ca80edd46962de063237ef7bffbea2551b28ea1d9f07ebf",
+      "crates/rinku-core/src/autolink.rs": "7799671b3c7fbc5c21a7dcd7d5a54e193bb1b102ebd43358fad84df52fdc6d81",
+      "crates/rinku-core/src/html.rs": "de2305825950d7738043a319e5e582f2aba96ff7ffdcf40aa4fd391bcb0d7a4d",
+      "crates/rinku-core/src/lib.rs": "a703acdc21aa052f387fa0e6f1450e9804edf9758748120edf74bbc42dff987b",
+      "crates/rinku-core/src/render.rs": "54ac2fbdd592a34b4f5b83c25029f34c5a2cbf9ce924fbc6693e9c0cb4ec890c",
+      "crates/rinku-core/tests/core.rs": "d7917da852dc748c4796c16118c8ee38c1497673b3454e9e31ab97e9081effb6",
+      "ext/rinku/Cargo.toml": "1f3ab647eead0ce17253f084e0fc0202f1852cbbab39723c72bb9d45e2b85460",
+      "ext/rinku/extconf.rb": "e1e441b6c4c9bb75d6a17246c6eaf3fa5ef858fb8e36e9005ef6bde065736af1",
+      "ext/rinku/src/lib.rs": "a10db2f14a4d5f65e2a73ee660b1baddd1fd7c78c3d36a939d2b1ef8e0724a30",
+      "lib/rails_rinku.rb": "072a32d5e6dfa543faa3f1ae34478dc37070ade21c0cecd86a4f3cb32a77490f",
+      "lib/rinku.rb": "5b7798cd4cc83d1247c34ad8d6df13010a38440a5404455561571441c4d30aa5",
+      "lib/version.rb": "a2b00756b3650f967b041b567aa127e58a2c11ded9446369160baeb9d9ab984f"
+    },
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)\nbinary: rustc\ncommit-hash: 58cf8f9c35b355199727627d07ae34a4e2846d67\ncommit-date: 2026-10-13\nhost: aarch64-apple-darwin\nrelease: 1.99.1\nLLVM version: 23.1.1",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)",
+    "cc": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "platform": "Darwin T9XXH63921 25.6.0 Darwin Kernel Version 25.6.0: Tue Aug 18 17:50:45 PDT 2026; root:xnu-12377.161.15.700.19~2/RELEASE_ARM64_T6020 arm64",
+    "invocation": [
+      "/Users/jury.razumau/.local/share/mise/installs/ruby/3.3.12/bin/ruby",
+      "tools/benchmark.rb",
+      "/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/lib:/private/var/folders/mw/3hmd8j1n4r9grn9drymmb6040000gq/T/opencode/rinku-review.6jr86f/c-baseline/ext/rinku",
+      "tmp/review-benchmark",
+      "--report-only"
+    ],
+    "build": "rb_sys release; thin LTO; codegen-units=1; Cargo.lock pinned",
+    "baseline_revision": "67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863",
+    "qualification": "Exploratory unless run on controlled release hardware",
+    "native_memory": "Not included in Ruby allocations; see docs/rust-rewrite.md for separate profiling"
+  }
+}

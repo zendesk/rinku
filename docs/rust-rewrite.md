@@ -32,6 +32,15 @@ uses owned snapshots; callback results are copied into the owned renderer
 before any subsequent Ruby call. Every unsafe binding operation documents its
 rooting, GVL, protection, and lifetime assumptions inline.
 
+Frozen sources retain their owned snapshot without refresh checks. Mutable
+sources additionally keep a native-stack-rooted frozen Ruby copy-on-write alias.
+While source and alias share storage, Ruby must detach before editing, so their
+current buffer pointers can be compared in constant time without scanning the
+unread suffix. Detached buffers are copied and the alias renewed; embedded
+strings use bounded copies. Pointers are obtained afresh in a Ruby-free scope,
+never retained across callbacks or allocation. Pointer equality without this
+immutable alias would miss in-place edits and is not a valid write detector.
+
 ## Callback mutation contract
 
 These cases were characterized in a separate C process before deleting C:
@@ -81,8 +90,9 @@ read out of bounds are tested only against the safe core, not used as C oracles.
 
 ## Datasets and measurements
 
-The JSON files remain unchanged. Every supplied expected output was verified
-against C before adoption:
+The versioned JSON fixtures live in `test/fixtures/workloads/` and are shared by
+tests, differential comparisons, and benchmarks. Their contents remain unchanged.
+Every supplied expected output was verified against C before adoption:
 
 * `benchmark.json` (11 cases):
   `Rinku.auto_link(Rinku.auto_link(input, :urls, 'rel="noreferrer"'), :email_addresses)`.
@@ -92,7 +102,11 @@ against C before adoption:
   `Rinku.auto_link(input, :urls, 'target="_blank"', nil)`.
   Inputs are already extracted, unlinked HTML text nodes; no HTML extraction is
   included in measurements. Email addresses stay unlinked.
-* Supplemental cases: large input, no links, and repeated callback rendering.
+* Supplemental cases: large input, no links, repeated callback rendering,
+  mutable/frozen identity callbacks at 1,000–64,000 links, and repeated-`@`
+  rejection at 1,000–16,000 repetitions. Scaling cases have explicit expected
+  output, also checked against C. Resize-fallback behavior is tested only in
+  Rust's Ruby tests because the C behavior was undefined.
 
 ```sh
 SAMPLES=20 SAMPLE_SECONDS=0.2 WARMUP_SECONDS=0.1 \
@@ -162,12 +176,13 @@ loading and current ActionView integration from outside the checkout.
 
 The version is `2.0.0.pre.1`; no gem is published by these local tools.
 
-Local validation: Ruby tests, 1,049 differential observations, optimized GC
+Local validation: Ruby tests, 1,061 differential observations, optimized GC
 stress/compaction, Rust tests, Clippy/formatting, Rust 1.85 compilation, pinned
 Miri, bounded fuzzing, and source-gem loading with ActionView on Ruby 3.3/3.4/4.0.
-See [the exploratory performance report](benchmarks/2026-10-19-final/README.md):
-all supplied dataset cases pass locally, but the callback-heavy supplemental
-case is about 9.4% slower. **The no-slowdown release requirement is not met.**
+See [the review-fix validation report](benchmarks/2026-10-19-review-fixes/README.md):
+all 32 local benchmark cases pass, including callback and repeated-`@` scaling.
+It supersedes the callback regression in the
+[earlier exploratory report](benchmarks/2026-10-19-final/README.md).
 Native allocation profiling and controlled hardware qualification remain open.
 
 - Pass Ruby 3.3, 3.4, and 4.0 compatibility, optimized stress, and package CI.

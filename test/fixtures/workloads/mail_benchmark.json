@@ -1,0 +1,46 @@
+{
+  "operation": "Rinku.auto_link",
+  "arguments": {
+    "mode": "urls",
+    "link_attributes": "target=\"_blank\"",
+    "skip_tags": null
+  },
+  "input_scope": "Each input is one unlinked HTML text node string passed to Rinku, not a complete email document.",
+  "cases": [
+    {
+      "name": "http_https_ftp_urls",
+      "input": "Please see https://support.example.com/requests/2468, http://example.com/path?q=1&lang=en, or ftp://files.example.com/archive.zip.",
+      "expected_output": "Please see <a href=\"https://support.example.com/requests/2468\" target=\"_blank\">https://support.example.com/requests/2468</a>, <a href=\"http://example.com/path?q=1&lang=en\" target=\"_blank\">http://example.com/path?q=1&lang=en</a>, or <a href=\"ftp://files.example.com/archive.zip\" target=\"_blank\">ftp://files.example.com/archive.zip</a>."
+    },
+    {
+      "name": "www_with_protocol_url_in_same_node",
+      "input": "Visit www.example.com after reviewing https://support.example.com/guide.",
+      "expected_output": "Visit <a href=\"http://www.example.com\" target=\"_blank\">www.example.com</a> after reviewing <a href=\"https://support.example.com/guide\" target=\"_blank\">https://support.example.com/guide</a>."
+    },
+    {
+      "name": "email_address_is_not_linked",
+      "input": "For help, contact support@example.com or read https://support.example.com/help.",
+      "expected_output": "For help, contact support@example.com or read <a href=\"https://support.example.com/help\" target=\"_blank\">https://support.example.com/help</a>."
+    },
+    {
+      "name": "escaped_query_from_serialized_text_node",
+      "input": "See https://example.com/search?q=one&amp;lang=en for details.",
+      "expected_output": "See <a href=\"https://example.com/search?q=one&amp;lang=en\" target=\"_blank\">https://example.com/search?q=one&amp;lang=en</a> for details."
+    },
+    {
+      "name": "parenthesized_url_and_punctuation",
+      "input": "Read (https://docs.example/guides/setup_(mac)). Then close the page.",
+      "expected_output": "Read (<a href=\"https://docs.example/guides/setup_(mac)\" target=\"_blank\">https://docs.example/guides/setup_(mac)</a>). Then close the page."
+    },
+    {
+      "name": "unicode_text_node",
+      "input": "Bonjour 👋 — consultez https://support.example.com/aide.",
+      "expected_output": "Bonjour 👋 — consultez <a href=\"https://support.example.com/aide\" target=\"_blank\">https://support.example.com/aide</a>."
+    },
+    {
+      "name": "long_mixed_email_text_node",
+      "input": "Hello Alex. We received your request and updated its status. Review it at https://support.example.com/requests/2468?from=email&amp;campaign=update. The troubleshooting article is at www.example.com/hc/articles/12345, and current service status is available at https://status.example.com/incidents/abc123. If you have more information to add, reply to this message or contact support@example.com. Please do not send passwords or payment details by email. For account security information, visit https://example.com/security (the page includes a checklist). You can also review the privacy policy at https://example.com/legal/privacy.",
+      "expected_output": "Hello Alex. We received your request and updated its status. Review it at <a href=\"https://support.example.com/requests/2468?from=email&amp;campaign=update\" target=\"_blank\">https://support.example.com/requests/2468?from=email&amp;campaign=update</a>. The troubleshooting article is at <a href=\"http://www.example.com/hc/articles/12345\" target=\"_blank\">www.example.com/hc/articles/12345</a>, and current service status is available at <a href=\"https://status.example.com/incidents/abc123\" target=\"_blank\">https://status.example.com/incidents/abc123</a>. If you have more information to add, reply to this message or contact support@example.com. Please do not send passwords or payment details by email. For account security information, visit <a href=\"https://example.com/security\" target=\"_blank\">https://example.com/security</a> (the page includes a checklist). You can also review the privacy policy at <a href=\"https://example.com/legal/privacy\" target=\"_blank\">https://example.com/legal/privacy</a>."
+    }
+  ]
+}

@@ -1,6 +1,16 @@
 // Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 use crate::{Kind, Link};
 
+/// Lazy byte renderer for ordered links from a single scanner.
+///
+/// For each link, call `start_link` followed by exactly one `end_link`, then call
+/// `finish` once after the last pair. With no links, `finish` returns `None`.
+/// Skipping or duplicating an `end_link` can produce incomplete/invalid markup;
+/// the renderer does not validate this protocol.
+///
+/// Input snapshots must retain the original length and byte offsets. Unread
+/// bytes may change between pairs, but `start_link` must receive the snapshot
+/// used to scan that link. `finish` uses the latest snapshot's remaining suffix.
 #[derive(Default)]
 pub struct Renderer {
     output: Option<Vec<u8>>,
@@ -8,6 +18,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
+    /// Copies the preceding text and opens a link using its original href.
+    /// Ranges must be nonempty, in bounds, and start at or after the last end.
+    ///
+    /// # Panics
+    /// Panics if the range is reversed, out of bounds, or overlaps a prior link.
     pub fn start_link(&mut self, input: &[u8], link: &Link, attributes: Option<&[u8]>) {
         let out = self
             .output
@@ -39,6 +54,8 @@ impl Renderer {
         self.copied = link.range.end;
     }
 
+    /// Appends the callback/identity text verbatim and closes the current link.
+    /// Must follow exactly one `start_link`; text need not have the href's length.
     pub fn end_link(&mut self, text: &[u8]) {
         if let Some(out) = &mut self.output {
             out.extend_from_slice(text);
@@ -46,6 +63,10 @@ impl Renderer {
         }
     }
 
+    /// Copies the unread suffix and returns output, or `None` if no link started.
+    /// All started links must be closed; input must be a compatible snapshot.
+    /// This method does not panic on a shorter input, but truncates the suffix;
+    /// callers should preserve length to avoid losing text.
     pub fn finish(mut self, input: &[u8]) -> Option<Vec<u8>> {
         if let Some(out) = &mut self.output {
             out.extend_from_slice(&input[self.copied.min(input.len())..]);

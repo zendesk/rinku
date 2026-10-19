@@ -2,6 +2,18 @@
 use std::ops::Range;
 
 pub const SHORT_DOMAINS: u32 = 1;
+const ACTIVE_SEARCH_CHUNK_BYTES: usize = 256;
+// C applies one initial pass, then up to six additional changing passes.
+const MAX_ADDITIONAL_TRIM_PASSES: usize = 6;
+
+#[derive(Clone, Copy)]
+enum Action {
+    Inactive,
+    Www,
+    Email,
+    Url,
+    HtmlTag,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum Mode {
@@ -23,31 +35,37 @@ pub struct Link {
     pub kind: Kind,
 }
 
-/// Holds offsets, never pointers into caller memory. Callers may refresh owned
-/// snapshots between `next` calls (including after recursive callbacks).
+/// Incremental byte scanner holding offsets, never pointers into caller memory.
+/// Start with `new`, then call `next` until it returns `None`. Each input must
+/// have the original byte length. Between calls, callers may replace unread
+/// bytes at or after the previous link's end (including after callbacks); already
+/// emitted ranges are never revisited. Tags may also change between calls.
+/// Pass each link and its matching input snapshot to `Renderer::start_link`.
 pub struct Scanner {
     end: usize,
     last_link: usize,
-    active: [u8; 256],
+    active: [Action; 256],
+    mode: Mode,
     flags: u32,
 }
 
 impl Scanner {
     pub fn new(mode: Mode, flags: u32) -> Self {
-        let mut active = [0; 256];
-        active[b'<' as usize] = 4;
+        let mut active = [Action::Inactive; 256];
+        active[b'<' as usize] = Action::HtmlTag;
         if !matches!(mode, Mode::Urls) {
-            active[b'@' as usize] = 2;
+            active[b'@' as usize] = Action::Email;
         }
         if !matches!(mode, Mode::Emails) {
-            active[b'w' as usize] = 1;
-            active[b'W' as usize] = 1;
-            active[b':' as usize] = 3;
+            active[b'w' as usize] = Action::Www;
+            active[b'W' as usize] = Action::Www;
+            active[b':' as usize] = Action::Url;
         }
         Self {
             end: 0,
             last_link: 0,
             active,
+            mode,
             flags,
         }
     }
@@ -61,24 +79,24 @@ impl Scanner {
             self.end += offset;
             let action = self.active[input[self.end] as usize];
             let at = self.end;
-            if action == 4 {
+            if matches!(action, Action::HtmlTag) {
                 self.end += crate::html::skip_tag(&input[at..], tags);
                 continue;
             }
             let parsed = match action {
-                1 => www(input, at, self.last_link).map(|range| Link {
+                Action::Www => www(input, at, self.last_link).map(|range| Link {
                     range,
                     kind: Kind::Www,
                 }),
-                2 => email(input, at, self.last_link).map(|range| Link {
+                Action::Email => email(input, at, self.last_link).map(|range| Link {
                     range,
                     kind: Kind::Email,
                 }),
-                3 => url(input, at, self.last_link, self.flags).map(|range| Link {
+                Action::Url => url(input, at, self.last_link, self.flags).map(|range| Link {
                     range,
                     kind: Kind::Url,
                 }),
-                _ => None,
+                Action::Inactive | Action::HtmlTag => None,
             };
             if let Some(link) = parsed {
                 self.end = link.range.end;
@@ -91,15 +109,15 @@ impl Scanner {
     }
 
     fn next_active(&self, data: &[u8]) -> Option<usize> {
-        if self.active[b':' as usize] == 0 {
+        if matches!(self.mode, Mode::Emails) {
             return memchr::memchr2(b'<', b'@', data);
         }
-        let emails = self.active[b'@' as usize] != 0;
+        let emails = matches!(self.mode, Mode::All);
         let mut offset = 0;
         // Bounded chunks avoid rescanning a whole suffix for one character
         // class when the other class repeatedly matches near the beginning.
         // memchr provides safe, optimized byte search; no UTF-8 semantics.
-        for chunk in data.chunks(256) {
+        for chunk in data.chunks(ACTIVE_SEARCH_CHUNK_BYTES) {
             let first = memchr::memchr3(b'<', b'w', b'W', chunk);
             let rest = &chunk[..first.unwrap_or(chunk.len())];
             let second = if emails {
@@ -134,7 +152,7 @@ fn unicode_space(data: &[u8]) -> bool {
     )
 }
 
-fn domain(data: &[u8], short: bool) -> usize {
+fn scan_domain(data: &[u8], short: bool) -> usize {
     if data.is_empty() || matches!(data[0], b'.' | b'-') {
         return 0;
     }
@@ -156,7 +174,7 @@ fn domain(data: &[u8], short: bool) -> usize {
     }
 }
 
-fn delim(data: &[u8], mut end: usize) -> usize {
+fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
     if let Some(i) = data[..end].iter().position(|&c| c == b'<') {
         end = i;
     }
@@ -212,12 +230,14 @@ fn delim(data: &[u8], mut end: usize) -> usize {
     }
 }
 
-fn delimit(data: &[u8], mut end: usize) -> usize {
-    end = delim(data, end);
+fn trim_link_end_bounded(data: &[u8], mut end: usize) -> usize {
+    end = trim_link_end_once(data, end);
     let mut iterations = 0;
     while end != 0 {
-        let next = delim(data, end);
-        if next == end || iterations > 5 {
+        // Preserve C's extra probe after six accepted changes: its result is
+        // discarded, not applied as an eighth trimming pass.
+        let next = trim_link_end_once(data, end);
+        if next == end || iterations >= MAX_ADDITIONAL_TRIM_PASSES {
             break;
         }
         end = next;
@@ -226,7 +246,7 @@ fn delimit(data: &[u8], mut end: usize) -> usize {
     end
 }
 
-fn tail(data: &[u8], mut end: usize) -> Option<usize> {
+fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
     if data.get(end).is_some_and(|&c| c > 127) {
         if !unicode_space(&data[end..]) {
             return None;
@@ -236,7 +256,7 @@ fn tail(data: &[u8], mut end: usize) -> Option<usize> {
             end += 1;
         }
     }
-    let end = delimit(data, end);
+    let end = trim_link_end_bounded(data, end);
     (end > 0).then_some(end)
 }
 
@@ -250,11 +270,11 @@ fn www(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
     if !data.starts_with(b"www.") {
         return None;
     }
-    let end = domain(data, false);
+    let end = scan_domain(data, false);
     if end == 0 {
         return None;
     }
-    Some(at..at + tail(data, end)?)
+    Some(at..at + scan_link_tail(data, end)?)
 }
 
 fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
@@ -281,6 +301,11 @@ fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
         }
         if c == b'@' {
             ats += 1;
+            // Another @ cannot become valid later in this candidate. The
+            // outer scanner still advances normally to try later addresses.
+            if ats > 1 {
+                return None;
+            }
         } else if c == b'.' && end < data.len() - 1 {
             dots += 1;
         } else if c != b'-' && c != b'_' {
@@ -291,7 +316,7 @@ fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
     if end < 2 || ats != 1 || dots == 0 {
         return None;
     }
-    let end = delimit(data, end);
+    let end = trim_link_end_bounded(data, end);
     (end > 0).then_some(start..at + end)
 }
 
@@ -321,11 +346,11 @@ fn url(input: &[u8], at: usize, last: usize, flags: u32) -> Option<Range<usize>>
     if !safe {
         return None;
     }
-    let len = domain(&data[3..], flags & SHORT_DOMAINS != 0);
+    let len = scan_domain(&data[3..], flags & SHORT_DOMAINS != 0);
     if len == 0 {
         return None;
     }
-    Some(start..at + tail(data, 3 + len)?)
+    Some(start..at + scan_link_tail(data, 3 + len)?)
 }
 
 #[cfg(test)]
@@ -343,8 +368,8 @@ mod tests {
 
     #[test]
     fn short_domain_final_byte_quirk() {
-        assert_eq!(domain(b"x", true), 0);
-        assert_eq!(domain(b"xy", true), 1);
-        assert_eq!(domain(b"a.b", false), 2);
+        assert_eq!(scan_domain(b"x", true), 0);
+        assert_eq!(scan_domain(b"xy", true), 1);
+        assert_eq!(scan_domain(b"a.b", false), 2);
     }
 }

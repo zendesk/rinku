@@ -4,7 +4,7 @@ require 'rinku'
 require_relative '../tools/workloads'
 
 class WorkloadsTest < Minitest::Test
-  Workloads.load.each do |test|
+  Workloads.load(supplemental: true).each do |test|
     define_method("test_#{test.name.tr('/', '_')}") do
       assert_equal test.expected, test.run
     end
