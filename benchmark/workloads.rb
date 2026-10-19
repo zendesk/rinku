@@ -2,7 +2,7 @@
 require 'json'
 
 module Workloads
-  FIXTURE_DIRECTORY = File.expand_path('../test/fixtures/workloads', __dir__)
+  FIXTURE_DIRECTORY = File.expand_path('fixtures', __dir__)
   FIXTURE_PATHS = %w[benchmark.json mail_benchmark.json].map { |name| File.join(FIXTURE_DIRECTORY, name) }.freeze
 
   Case = Struct.new(:name, :input, :expected, :operation, keyword_init: true) do
@@ -37,7 +37,7 @@ module Workloads
         ['large_input', ('https://example.com/a hello a@b.com ' * 4096), ->(text) { Rinku.auto_link(text) }],
         ['callbacks', ('https://example.com/a a@b.com ' * 32), ->(text) { Rinku.auto_link(text) { |link| link.reverse } }]
       ].each do |name, input, operation|
-        # Supplemental expected outputs are independently checked by differential.rb.
+        # Supplemental outputs were independently checked against the historical C implementation.
         cases << Case.new(name: "supplemental/#{name}", input: input,
           expected: operation.call(input), operation: operation)
       end

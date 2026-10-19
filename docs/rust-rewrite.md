@@ -65,10 +65,9 @@ These rules preserve defined in-place mutation while making previously unsafe
 resizing and collection deterministic. Mutation never leaves a Ruby buffer
 pointer alive across callback execution, allocation, or compaction.
 
-## Reproduce the C baseline
+## C compatibility comparison
 
-The baseline is **67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863**.
-`docs/baseline.json` records the characterization environment and invocation.
+The historical C revision is **67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863**.
 The repository contains no C fallback or duplicate reference implementation.
 Git history is sufficient; `tools/build_baseline.rb` exports only historical
 `ext/` and `lib/` into a **new external directory**, and builds with the exact
@@ -88,65 +87,17 @@ callback arguments/order, mutations, module inclusion, all byte-prefix classes,
 and a fixed-seed randomized corpus. Inputs that could make C's Unicode lookahead
 read out of bounds are tested only against the safe core, not used as C oracles.
 
-## Datasets and measurements
+## Performance
 
-The versioned JSON fixtures live in `test/fixtures/workloads/` and are shared by
-tests, differential comparisons, and benchmarks. Their contents remain unchanged.
-Every supplied expected output was verified against C before adoption:
+All benchmark scripts, fixtures, and documentation live in [`benchmark/`](../benchmark/README.md).
+Benchmarks are optional local tools, not CI jobs or release gates. Results are
+gitignored and overwritten; no historical results or C build are needed to run
+them. Correctness tests and C differential checks still share the workload
+fixtures, whose expected outputs remain unchanged.
 
-* `benchmark.json` (11 cases):
-  `Rinku.auto_link(Rinku.auto_link(input, :urls, 'rel="noreferrer"'), :email_addresses)`.
-  The **entire two-pass operation** is timed. This resolves URL-only attributes
-  without changing the public API or email expectations.
-* `mail_benchmark.json` (7 cases): consume its declared arguments verbatim:
-  `Rinku.auto_link(input, :urls, 'target="_blank"', nil)`.
-  Inputs are already extracted, unlinked HTML text nodes; no HTML extraction is
-  included in measurements. Email addresses stay unlinked.
-* Supplemental cases: large input, no links, repeated callback rendering,
-  mutable/frozen identity callbacks at 1,000–64,000 links, and repeated-`@`
-  rejection at 1,000–16,000 repetitions. Scaling cases have explicit expected
-  output, also checked against C. Resize-fallback behavior is tested only in
-  Rust's Ruby tests because the C behavior was undefined.
-
-```sh
-SAMPLES=20 SAMPLE_SECONDS=0.2 WARMUP_SECONDS=0.1 \
-  ruby tools/benchmark.rb /absolute/new/path/rinku-c/lib:/absolute/new/path/rinku-c/ext/rinku tmp/measurements
-```
-
-The harness first runs differential correctness checks outside timing. It warms
-up every case, keeps GC enabled with identical settings, disables YJIT in both
-processes, alternates C/Rust process order, and samples independent processes.
-JSON parsing and preparation are outside timed sections. `raw.json` records
-every elapsed time, iteration count, throughput, and Ruby allocation count,
-plus Ruby/Rust/compiler versions, source and native-library hashes, revisions,
-build settings, platform, fixture hashes, and invocation. `summary.json` includes
-per-case throughput, bootstrap 95% confidence intervals for mean time/op, and
-paired ratios of arithmetic mean times. Dataset and combined aggregates give every case equal
-weight (geometric means of ratios); they do not replace the per-case gate.
-
-The **zero-tolerance gate** requires the upper confidence bound of Rust/C time
-to be **at most 1.0 on every workload**. Crossing 1.0 is inconclusive, not a pass.
-The command exits unsuccessfully unless all pass. `--report-only` saves
-exploratory results without implying release qualification. Shared CI is for
-reproduction/artifacts only; use dedicated controlled hardware to qualify a
-release. Do not run compilers, stress tests, or profilers concurrently with
-timing. More samples do not repair uncontrolled systematic noise.
-
-Ruby object counts do **not** measure Rust allocations. Profile native memory
-separately, e.g. on Linux with heaptrack, using the same Ruby and built libraries:
-
-```sh
-RINKU_LIB=/absolute/new/path/rinku-c/lib:/absolute/new/path/rinku-c/ext/rinku \
-  heaptrack -o c-memory ruby tools/memory_worker.rb
-RINKU_LIB="$PWD/lib" heaptrack -o rust-memory ruby tools/memory_worker.rb
-heaptrack_print c-memory.*.gz > c-memory.txt
-heaptrack_print rust-memory.*.gz > rust-memory.txt
-```
-
-Keep allocation counts, peak native bytes, and retained allocations attributed
-to the extension's call stacks separate from Ruby VM allocations and process
-RSS. On macOS use Instruments Allocations with native stack recording instead.
-The benchmark workflow collects native profiles separately from timing files.
+The [historical C-vs-Rust comparison](../benchmark/c-vs-rust.md) records the
+rewrite's performance improvements and measurement limitations without keeping
+raw results as a permanent baseline.
 
 ## Safety validation and packaging
 
@@ -179,17 +130,13 @@ The version is `2.0.0.pre.1`; no gem is published by these local tools.
 Local validation: Ruby tests, 1,061 differential observations, optimized GC
 stress/compaction, Rust tests, Clippy/formatting, Rust 1.85 compilation, pinned
 Miri, bounded fuzzing, and source-gem loading with ActionView on Ruby 3.3/3.4/4.0.
-See [the review-fix validation report](benchmarks/2026-10-19-review-fixes/README.md):
-all 32 local benchmark cases pass, including callback and repeated-`@` scaling.
-It supersedes the callback regression in the
-[earlier exploratory report](benchmarks/2026-10-19-final/README.md).
-Native allocation profiling and controlled hardware qualification remain open.
+Historical performance observations are summarized in the
+[C-vs-Rust comparison](../benchmark/c-vs-rust.md). Native allocation profiling
+and controlled hardware measurements were not part of that comparison.
 
 - Pass Ruby 3.3, 3.4, and 4.0 compatibility, optimized stress, and package CI.
 - Pass pinned Miri, formatting, Clippy, MSRV, bounded properties, and fuzzing.
 - Recheck differential observations using the recorded C revision.
-- Collect controlled performance samples and separate native memory profiles.
-- Require the zero-slowdown gate on **all** required and supplemental workloads.
 - Review evidence before manually publishing a prerelease; qualify that
-  prerelease before deciding on final 2.0. Do not publish merely because an
-  aggregate improved or noisy CI failed to detect a slowdown.
+  prerelease before deciding on final 2.0. Historical benchmark improvements
+  alone are not release qualification.

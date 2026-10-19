@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 # Run under a native allocation profiler, separately from timing measurements.
-$LOAD_PATH.unshift(*ENV.fetch('RINKU_LIB').split(File::PATH_SEPARATOR))
+$LOAD_PATH.unshift(*ENV.fetch('RINKU_LIB', File.expand_path('../lib', __dir__)).split(File::PATH_SEPARATOR))
 require 'rinku'
 require_relative 'workloads'
 cases = Workloads.load(supplemental: true)

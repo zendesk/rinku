@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'minitest/autorun'
 require 'rinku'
-require_relative '../tools/workloads'
+require_relative '../benchmark/workloads'
 
 class WorkloadsTest < Minitest::Test
   Workloads.load(supplemental: true).each do |test|

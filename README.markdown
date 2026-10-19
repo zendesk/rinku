@@ -136,10 +136,11 @@ ruby tools/package_smoke.rb
 
 The core forbids unsafe code and does not depend on Ruby. Miri covers that
 production parser, not libruby. CI tests Ruby 3.3, 3.4, and 4.0, GC compaction,
-the source gem, and the historical C baseline. Expand the Ruby matrix when
+the source gem, and compatibility with historical C behavior. Expand the Ruby matrix when
 new stable versions are released. See [the rewrite notes](docs/rust-rewrite.md)
-for ownership rules, mutation semantics, differential testing, and performance
-release gates.
+for ownership rules, mutation semantics, and differential testing. Optional local
+benchmarks and the historical C-vs-Rust comparison live in [`benchmark/`](benchmark/README.md);
+benchmark results are not tracked or run in CI.
 
 Releasing a new version
 ----------------------------------------------------

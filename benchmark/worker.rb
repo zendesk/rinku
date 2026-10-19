@@ -1,8 +1,7 @@
 # frozen_string_literal: true
-$LOAD_PATH.unshift(*ENV.fetch('RINKU_LIB').split(File::PATH_SEPARATOR))
+$LOAD_PATH.unshift(*ENV.fetch('RINKU_LIB', File.expand_path('../lib', __dir__)).split(File::PATH_SEPARATOR))
 require 'rinku'
 require 'rbconfig'
-require 'open3'
 require 'digest'
 require_relative 'workloads'
 

@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
     COPYING
     README.markdown
     docs/rust-rewrite.md
-    docs/baseline.json
     Rakefile
     Cargo.toml
     Cargo.lock

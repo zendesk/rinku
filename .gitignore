@@ -14,3 +14,4 @@ tmp/*
 /ext/rinku/rinku.so
 /lib/rinku.so
 /pkg/
+/benchmark/results/
