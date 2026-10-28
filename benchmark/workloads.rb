@@ -37,7 +37,6 @@ module Workloads
         ['large_input', ('https://example.com/a hello a@b.com ' * 4096), ->(text) { Rinku.auto_link(text) }],
         ['callbacks', ('https://example.com/a a@b.com ' * 32), ->(text) { Rinku.auto_link(text) { |link| link.reverse } }]
       ].each do |name, input, operation|
-        # Supplemental outputs were independently checked against the historical C implementation.
         cases << Case.new(name: "supplemental/#{name}", input: input,
           expected: operation.call(input), operation: operation)
       end

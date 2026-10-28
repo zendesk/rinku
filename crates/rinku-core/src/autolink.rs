@@ -3,7 +3,7 @@ use std::ops::Range;
 
 pub const SHORT_DOMAINS: u32 = 1;
 const ACTIVE_SEARCH_CHUNK_BYTES: usize = 256;
-// C applies one initial pass, then up to six additional changing passes.
+// Keep C's initial pass and limit of six additional changing passes.
 const MAX_ADDITIONAL_TRIM_PASSES: usize = 6;
 
 #[derive(Clone, Copy)]
@@ -35,12 +35,8 @@ pub struct Link {
     pub kind: Kind,
 }
 
-/// Incremental byte scanner holding offsets, never pointers into caller memory.
-/// Start with `new`, then call `next` until it returns `None`. Each input must
-/// have the original byte length. Between calls, callers may replace unread
-/// bytes at or after the previous link's end (including after callbacks); already
-/// emitted ranges are never revisited. Tags may also change between calls.
-/// Pass each link and its matching input snapshot to `Renderer::start_link`.
+/// Stores offsets, not pointers, so callers can change unread bytes between scans.
+/// Keep the input length unchanged so those offsets remain valid.
 pub struct Scanner {
     end: usize,
     last_link: usize,
@@ -114,9 +110,8 @@ impl Scanner {
         }
         let emails = matches!(self.mode, Mode::All);
         let mut offset = 0;
-        // Bounded chunks avoid rescanning a whole suffix for one character
-        // class when the other class repeatedly matches near the beginning.
-        // memchr provides safe, optimized byte search; no UTF-8 semantics.
+        // Bounded chunks prevent repeated lookahead from rescanning the full suffix.
+        // memchr searches bytes safely and does not require valid UTF-8.
         for chunk in data.chunks(ACTIVE_SEARCH_CHUNK_BYTES) {
             let first = memchr::memchr3(b'<', b'w', b'W', chunk);
             let rest = &chunk[..first.unwrap_or(chunk.len())];
@@ -135,7 +130,7 @@ impl Scanner {
 }
 
 pub(crate) fn space(c: u8) -> bool {
-    // Ruby's rb_isspace, not Rust's broader ASCII whitespace predicate.
+    // Match Ruby's rb_isspace, not Rust's broader ASCII whitespace set.
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
 }
 
@@ -158,7 +153,7 @@ fn scan_domain(data: &[u8], short: bool) -> usize {
     }
     let mut dots = 0;
     let mut i = 0;
-    // Deliberately don't classify the final byte: a historical parser quirk.
+    // Keep the historical rule that does not classify the final byte.
     while i < data.len() - 1 {
         match data[i] {
             b'.' => dots += 1,
@@ -180,7 +175,7 @@ fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
     }
     while end > 0 {
         match data[end - 1] {
-            // strchr in the C version matches its terminating NUL too.
+            // C's strchr also matches its terminating NUL.
             b'?' | b'!' | b'.' | b',' | 0 => end -= 1,
             b';' => {
                 if end < 2 {
@@ -234,8 +229,7 @@ fn trim_link_end_bounded(data: &[u8], mut end: usize) -> usize {
     end = trim_link_end_once(data, end);
     let mut iterations = 0;
     while end != 0 {
-        // Preserve C's extra probe after six accepted changes: its result is
-        // discarded, not applied as an eighth trimming pass.
+        // C makes one extra probe after six changes, then discards its result.
         let next = trim_link_end_once(data, end);
         if next == end || iterations >= MAX_ADDITIONAL_TRIM_PASSES {
             break;
@@ -261,8 +255,7 @@ fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
 }
 
 fn www(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
-    // Ruby's rb_ispunct is !rb_isalnum, including NUL/control/high bytes.
-    // It is intentionally broader than ASCII punctuation or libc ispunct.
+    // C treated bytes outside ASCII letters and digits as punctuation, including NUL.
     if at > last && input[at - 1].is_ascii_alphanumeric() {
         return None;
     }
@@ -301,8 +294,7 @@ fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
         }
         if c == b'@' {
             ats += 1;
-            // Another @ cannot become valid later in this candidate. The
-            // outer scanner still advances normally to try later addresses.
+            // Reject this candidate. The outer scanner can still test later addresses.
             if ats > 1 {
                 return None;
             }

@@ -169,12 +169,10 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     flags = Rinku::AUTOLINK_SHORT_DOMAINS
 
-    # Specifying use short_domains in the args
     url = "http://google"
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     assert_equal Rinku.auto_link(url, nil, nil, nil, flags), linked_url
 
-    # Specifying no short_domains in the args
     url = "http://google"
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     assert_equal Rinku.auto_link(url, nil, nil, nil, 0), url
@@ -203,11 +201,12 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
   end
 
   def test_does_not_autolink_unicode_urls
-    url = "http://examplе.com" # <- this contains a sneaky cyrillic e lookalike
+    # The final character is Cyrillic U+0435, not Latin e.
+    url = "http://examplе.com"
     assert_equal url, Rinku.auto_link(url)
     assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
 
-    url = "www.examplе.com" # so does this
+    url = "www.examplе.com"
     assert_equal url, Rinku.auto_link(url)
     assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
   end
@@ -315,7 +314,7 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
 
     assert_linked "&lt;<a href=\"http://www.google.com\">http://www.google.com</a>&gt;)", "&lt;http://www.google.com&gt;)"
 
-    #this produces invalid output, but limits how much work we will do
+    # The six-pass limit can leave invalid HTML. Keep this output for compatibility.
     assert_linked "&lt;<a href=\"http://www.google.com&gt;\">http://www.google.com&gt;</a>)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)", "&lt;http://www.google.com&gt;)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)"
 
   end

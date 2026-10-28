@@ -1,5 +1,5 @@
 // Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
-//! Byte-oriented Rinku parser. No Ruby, UTF-8 assumptions, or unsafe code.
+//! Byte parsing supports invalid UTF-8 without Ruby or unsafe code.
 #![forbid(unsafe_code)]
 
 mod autolink;
@@ -27,8 +27,7 @@ pub fn auto_link(
     renderer.finish(input)
 }
 
-/// Fallible rendering uses the exact same scanner/renderer as the Ruby binding.
-/// `None` means no links, allowing callers to preserve input object identity.
+/// `None` means no links, so the binding can return the original input object.
 pub fn link_with<E>(
     input: &[u8],
     mode: Mode,

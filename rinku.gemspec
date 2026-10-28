@@ -3,12 +3,10 @@ require_relative "lib/version"
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
   s.version = Rinku::VERSION
-  s.summary = "Mostly autolinking"
+  s.summary = "Autolink URLs and email addresses"
   s.description = <<-EOF
-    A fast and very smart autolinking library that
-    acts as a drop-in replacement for Rails `auto_link`
-
-    This is now a significant departure from the base gem.
+    Autolink URLs and email addresses in Ruby strings.
+    Includes a Rails ActionView integration.
   EOF
   s.email = 'shajith@zendesk.com'
   s.homepage = 'https://github.com/zendesk/rinku'

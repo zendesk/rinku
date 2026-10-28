@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       qualification_evidence:
-        description: 'HTTPS URL to reviewed controlled performance and native-memory evidence'
+        description: 'HTTPS URL for reviewed, controlled performance and native-memory evidence'
         required: true
         type: string
 

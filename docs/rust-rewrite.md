@@ -2,77 +2,93 @@
 
 ## Architecture and safety boundary
 
-`crates/rinku-core` contains the production scanner, HTML skipping, and renderer.
-It has `#![forbid(unsafe_code)]`, no Ruby objects, and no UTF-8
-requirement. It recognizes exactly the original complete whitespace byte
-sequences; truncated sequences are ordinary bytes, never out-of-bounds reads.
-Historical final-byte domain classification, `strchr`'s NUL behavior, Ruby's
-`rb_ispunct == !rb_isalnum`, case sensitivity, and the punctuation iteration
-limit are intentional compatibility rules, not opportunities for normalization.
-Its only dependency is the safe byte-search API of pinned `memchr` 2.8.3;
-bounded search chunks prevent repeated lookahead from becoming quadratic.
+`crates/rinku-core` contains the production scanner, HTML tag skipping, and
+renderer. It forbids unsafe Rust. It does not use Ruby objects or require
+UTF-8 input. The scanner works on bytes. It accepts the same complete
+whitespace sequences as the C version. It treats truncated sequences as
+ordinary bytes and does not read past the input.
+
+The public `Scanner` and `Renderer` APIs use byte offsets. Keep the input length
+unchanged while scanning. You can change unread bytes between calls, but the
+scanner does not revisit earlier ranges. For each link, call `start_link` and
+then `end_link` once. Pass `start_link` the snapshot that the scanner used for
+that link. Call `finish` once with the latest snapshot. A shorter final
+snapshot truncates the output suffix.
+
+The core preserves several historical rules. These include final-byte domain
+classification, `strchr` matching a terminating NUL, Ruby's
+`rb_ispunct == !rb_isalnum` behavior, case-sensitive `www.` and HTML tag names,
+and the punctuation iteration limit. Do not normalize these rules. The core has
+one dependency: `memchr` 2.8.3. Its safe byte-search API uses 256-byte chunks.
+This prevents repeated lookahead from scanning the full unread suffix each time.
 
 `ext/rinku` pins Magnus 0.9.3 and rb-sys 0.9.130. Rust 1.85 is the minimum
-supported compiler (also checked in CI). The binding validates the C argument
-types and validation order before entering the parser. Narrow protected rb-sys
-calls preserve Ruby's exact Check_Type, FIX2INT, and StringValueCStr errors.
-All execution remains under the GVL. Magnus's method/init wrappers catch Rust
-panics. Callback exceptions, `break`, `return`, and `throw` pass through protected
-calls and `Result`, dropping native allocations before reentering Ruby.
+supported compiler. CI checks this version. The binding checks argument types
+and validation order before it calls the parser. Small protected rb-sys calls
+preserve Ruby's exact `Check_Type`, `FIX2INT`, and `StringValueCStr` errors.
 
-Ruby handles remain in VM/native-stack roots. Original skip-tag string objects
-are retained in a **Ruby array**, never a `Vec<Value>`, so callback array edits
-cannot make them unreachable. Cached IDs are permanent interned Ruby IDs using
-Magnus `LazyId`, not unmarked heap values. There is no global mutable parser
-state. Recursive calls have independent scanners, buffers, and snapshots.
+All binding calls run under the Global VM Lock (GVL). Magnus's method and init
+wrappers catch Rust panics. Protected calls return callback exceptions,
+`break`, `return`, and `throw` through `Result`. This lets Rust drop native
+allocations before control returns to Ruby.
 
-The no-block fast path may borrow Ruby buffers only in a strictly Ruby-free
-core call. Rust's system allocator cannot trigger Ruby GC. Callback processing
-uses owned snapshots; callback results are copied into the owned renderer
-before any subsequent Ruby call. Every unsafe binding operation documents its
-rooting, GVL, protection, and lifetime assumptions inline.
+Keep Ruby handles in VM or native-stack roots. Keep the original skip-tag
+strings in a **Ruby array**, not in `Vec<Value>`. A callback can change its
+array, but the Ruby array keeps the original strings marked. `LazyId` stores
+permanent interned Ruby IDs, not unmarked heap values. The parser has no global
+mutable state. Each recursive call has its own scanner, buffers, and snapshots.
 
-Frozen sources retain their owned snapshot without refresh checks. Mutable
-sources additionally keep a native-stack-rooted frozen Ruby copy-on-write alias.
-While source and alias share storage, Ruby must detach before editing, so their
-current buffer pointers can be compared in constant time without scanning the
-unread suffix. Detached buffers are copied and the alias renewed; embedded
-strings use bounded copies. Pointers are obtained afresh in a Ruby-free scope,
-never retained across callbacks or allocation. Pointer equality without this
-immutable alias would miss in-place edits and is not a valid write detector.
+The no-block path borrows Ruby buffers only during a Ruby-free core call. Rust's
+system allocator cannot start Ruby garbage collection. The callback path uses
+owned snapshots. It copies callback results into the renderer before another
+Ruby call. Each unsafe binding operation states its rooting, GVL, protection,
+and lifetime assumptions.
+
+Frozen input uses an owned snapshot and needs no refresh checks. Mutable input
+also uses a frozen Ruby copy-on-write alias rooted on the native stack. Ruby
+must detach shared storage before it can edit the source. The binding can then
+compare buffer pointers in constant time instead of scanning the unread suffix.
+If the source keeps its original length and the pointers differ, the binding
+copies unread bytes and creates a new alias. It copies embedded strings with a
+bounded operation. It obtains pointers only in a Ruby-free scope and does not
+keep them across callbacks or allocation.
+Pointer equality alone would miss edits without the frozen alias.
 
 ## Callback mutation contract
 
-These cases were characterized in a separate C process before deleting C:
+We recorded these cases in a separate C process before we removed the C code:
 
-* Same-length source edits affect future scanning/copying. After each callback,
-  refresh the snapshot if the source still has the original byte length. Already
-  emitted output and the current href are not rewritten.
-* Attribute string edits affect later links. Preserve the original leading
-  whitespace offset; stop at the current first NUL. Attribute resizing is safe
-  in Rust, with that offset clamped to the new length.
-* Skip-tag **string** edits affect later tag checks. Retain the original string
-  objects and refresh their bytes after callbacks, stopping at NUL when parsing.
-* Skip-tag **array** replacement, insertion, or removal does not replace the
-  originally loaded tag objects. The binding roots them even if removed.
-* Length-changing source mutation can make C access freed buffers or read beyond
-  the new string. Such behavior is not a baseline contract. Rust keeps the last
-  same-length snapshot when the length changes. Same-length edits use the current
-  bytes regardless of whether Ruby reallocated the buffer. Callback arguments use
-  the initial encoding; final output uses the source's current encoding, as in C.
+* Same-length source edits affect later scanning and copying. After each
+  callback, refresh the snapshot if the source still has its original byte
+  length. Do not rewrite output that is already emitted or the current `href`.
+* Attribute edits affect later links. Keep the original leading-whitespace
+  offset and clamp it to the current string length. Stop at the first NUL.
+* Edits to a skip-tag **string** affect later tag checks. Keep the original
+  string objects and refresh their bytes after each callback. Treat a NUL as
+  the end of a tag when parsing.
+* Replacing, adding, or removing items in the caller's skip-tag **array** does
+  not replace the strings that the call loaded at the start. The binding keeps
+  those strings rooted, even if the caller removes them.
+* A source length change can make C read freed memory or read past the new
+  string. This is not a compatibility contract. Rust keeps the last snapshot
+  until the source returns to its original length. For same-length edits, Rust
+  uses current bytes even if Ruby moved the buffer.
+* Callback arguments use the source's initial encoding. Final output uses the
+  source's current encoding, as in C.
 
-These rules preserve defined in-place mutation while making previously unsafe
-resizing and collection deterministic. Mutation never leaves a Ruby buffer
-pointer alive across callback execution, allocation, or compaction.
+These rules keep defined in-place changes and make unsafe resizing and
+collection deterministic. The binding does not keep a Ruby buffer pointer
+across a callback, allocation, or compaction.
 
 ## C compatibility comparison
 
 The historical C revision is **67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863**.
-The repository contains no C fallback or duplicate reference implementation.
-Git history is sufficient; `tools/build_baseline.rb` exports only historical
-`ext/` and `lib/` into a **new external directory**, and builds with the exact
-Ruby executable running the script. It records build metadata alongside it.
-Fetch full history first if using a shallow clone.
+The repository has no C fallback or duplicate reference implementation. Use
+Git history to build the old version. `tools/build_baseline.rb` exports only
+the historical `ext/` and `lib/` directories to a **new external directory**.
+It builds the extension with the Ruby executable that runs the script. It also
+records build metadata. Fetch the full Git history before you use this script
+in a shallow clone.
 
 ```sh
 ruby tools/build_baseline.rb /absolute/new/path/rinku-c
@@ -80,24 +96,26 @@ bundle exec rake compile
 ruby tools/differential.rb /absolute/new/path/rinku-c/lib:/absolute/new/path/rinku-c/ext/rinku
 ```
 
-Alternatively pass load paths for a separately installed C gem. The harness
-launches separate Ruby processes against identical fixtures. It compares output
-bytes, class, encoding, identity, strict errors/messages, validation order,
-callback arguments/order, mutations, module inclusion, all byte-prefix classes,
-and a fixed-seed randomized corpus. Inputs that could make C's Unicode lookahead
-read out of bounds are tested only against the safe core, not used as C oracles.
+You can also pass load paths for an installed C gem. The harness starts a
+separate Ruby process for each implementation and uses the same fixtures. It
+compares output bytes, class, encoding, identity, errors and messages,
+validation order, callback arguments and order, mutations, module inclusion,
+all byte-prefix classes, and a fixed-seed randomized corpus. It tests inputs
+that could make C's Unicode lookahead read past the input only against the
+safe core. It does not use C as an oracle for those inputs.
 
 ## Performance
 
-All benchmark scripts, fixtures, and documentation live in [`benchmark/`](../benchmark/README.md).
-Benchmarks are optional local tools, not CI jobs or release gates. Results are
-gitignored and overwritten; no historical results or C build are needed to run
-them. Correctness tests and C differential checks still share the workload
-fixtures, whose expected outputs remain unchanged.
+Benchmark scripts, fixtures, and documentation are in
+[`benchmark/`](../benchmark/README.md). Benchmarks are optional local tools.
+They do not run in CI and are not release gates. The runner overwrites results
+on each run, and Git ignores those files. You do not need old results or a C
+build to run the benchmarks. Correctness tests and C compatibility checks use
+the same workload fixtures. Their expected outputs have not changed.
 
-The [historical C-vs-Rust comparison](../benchmark/c-vs-rust.md) records the
-rewrite's performance improvements and measurement limitations without keeping
-raw results as a permanent baseline.
+The [historical C-versus-Rust report](../benchmark/c-vs-rust.md) lists the
+measured performance changes and limits. It does not keep raw results as a
+permanent baseline.
 
 ## Safety validation and packaging
 
@@ -111,32 +129,38 @@ cargo +nightly-2026-10-01 fuzz run autolink -- -max_total_time=60 -max_len=16384
 ruby tools/package_smoke.rb
 ```
 
-Miri validates actual production core paths, not Ruby/libruby. Optimized Ruby
-stress tests cover temporary/embedded/heap strings, invalid encodings, compaction,
-heavy allocations, recursive calls, strict callback results, exceptions,
-nonlocal exits, mutation, and no-link identity. They restore `GC.stress` in
-`ensure` and run separately from timing. Fuzzing is bounded; move minimized
-failures into `crates/rinku-core/tests/core.rs` as permanent regressions.
+Miri tests production core paths, not Ruby or `libruby`. Optimized Ruby stress
+tests cover temporary, embedded, and heap strings; invalid encodings; garbage
+collector compaction; heavy allocation; recursive calls; strict callback
+results; exceptions; nonlocal exits; mutation; and no-link identity. The tests
+restore `GC.stress` in `ensure`. Run them separately from timing tests. Fuzzing
+has a time limit. Add each minimized failure to
+`crates/rinku-core/tests/core.rs` as a regression test.
 
-The source gem explicitly includes both workspace manifests, member manifests,
-Rust sources, `Cargo.lock`, license, and public Ruby files. `package_smoke.rb`
-builds and installs it into an isolated temporary GEM_HOME and verifies native
-loading and current ActionView integration from outside the checkout.
+The source gem includes the root workspace manifest, the crate manifests, Rust
+sources, `Cargo.lock`, the license, and public Ruby files. `package_smoke.rb`
+builds and installs the gem in a temporary `GEM_HOME`. It then checks native
+loading and the current ActionView integration from outside the repository.
 
 ## Release checklist
 
-The version is `2.0.0.pre.1`; no gem is published by these local tools.
+The current version is `2.0.0.pre.1`. Local tools do not publish the gem. The
+GitHub Actions publish workflow runs manually. It requires an HTTPS URL for
+reviewed, controlled performance and native-memory qualification evidence.
 
-Local validation: Ruby tests, 1,061 differential observations, optimized GC
-stress/compaction, Rust tests, Clippy/formatting, Rust 1.85 compilation, pinned
-Miri, bounded fuzzing, and source-gem loading with ActionView on Ruby 3.3/3.4/4.0.
-Historical performance observations are summarized in the
-[C-vs-Rust comparison](../benchmark/c-vs-rust.md). Native allocation profiling
-and controlled hardware measurements were not part of that comparison.
+Current local validation includes Ruby tests, 1,061 differential observations,
+optimized garbage-collector stress and compaction, Rust tests, Clippy,
+formatting, Rust 1.85 compilation, pinned Miri, bounded fuzzing, and source-gem
+loading with ActionView on Ruby 3.3, 3.4, and 4.0. The
+[C-versus-Rust report](../benchmark/c-vs-rust.md) summarizes historical
+performance. That comparison did not include native-memory profiling or
+controlled hardware measurements.
 
-- Pass Ruby 3.3, 3.4, and 4.0 compatibility, optimized stress, and package CI.
-- Pass pinned Miri, formatting, Clippy, MSRV, bounded properties, and fuzzing.
-- Recheck differential observations using the recorded C revision.
-- Review evidence before manually publishing a prerelease; qualify that
-  prerelease before deciding on final 2.0. Historical benchmark improvements
-  alone are not release qualification.
+- Pass Ruby 3.3, 3.4, and 4.0 compatibility tests, optimized stress tests, and
+  package tests.
+- Pass pinned Miri, formatting, Clippy, MSRV, bounded property tests, and
+  fuzzing.
+- Repeat the differential checks with the recorded C revision.
+- Review the evidence before you run the publish workflow. Qualify the
+  pre-release before you decide to publish final 2.0. Historical benchmark
+  gains alone do not qualify a release.

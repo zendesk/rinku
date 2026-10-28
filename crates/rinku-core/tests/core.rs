@@ -114,8 +114,7 @@ fn truncated_sequences_and_every_byte() {
                 // A high byte immediately after the domain rejects the link.
                 text.clone()
             } else {
-                // After an ASCII path delimiter, truncated sequences are
-                // ordinary tail bytes and remain inside both href and label.
+                // After `/`, incomplete UTF-8 bytes stay in the URL and label.
                 let scheme = if prefix.starts_with(b"www.") {
                     b"http://".as_slice()
                 } else {
@@ -138,7 +137,7 @@ fn truncated_sequences_and_every_byte() {
 
 #[test]
 fn bounded_arbitrary_bytes_have_equivalent_rendering_and_valid_ranges() {
-    // Fixed seed and bounds make this property test reproducible under Miri.
+    // Use a fixed seed and bounded inputs for reproducible Miri runs.
     let mut random = 0x1234_5678_u64;
     let count = if cfg!(miri) { 64 } else { 4096 };
     for iteration in 0..count {

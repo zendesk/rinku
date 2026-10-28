@@ -26,7 +26,6 @@ measurements = cases.map do |test|
   start = clock
   iterations.times { test.run }
   elapsed = clock - start
-  # Ruby object counts exclude Rust buffers. Profile native memory separately.
   GC.start
   before = GC.stat(:total_allocated_objects)
   128.times { test.run }

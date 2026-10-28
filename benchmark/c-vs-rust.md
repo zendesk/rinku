@@ -1,35 +1,39 @@
 # Why the Rust rewrite: historical performance
 
-The rewrite improves common autolinking workloads while moving the production
-scanner and renderer into a safe Rust core (`#![forbid(unsafe_code)]`). In the
-2026-10-19 comparison, general workloads used **22% less time** and mail text-node
-workloads **18% less time** than C (equal-weight geometric means of Rust/C times:
-0.779 and 0.823). Repeated invalid email candidates improved from quadratic to
-approximately linear scaling.
+The Rust rewrite was faster on the measured workloads. It also moves the
+production scanner and renderer into a Rust core that forbids unsafe code. In
+the 2026-10-19 comparison, general workloads used **22% less time** than C.
+Mail text-node workloads used **18% less time**. These percentages use the
+equal-weight geometric mean of Rust/C time: 0.779 for general workloads and
+0.823 for mail workloads. Repeated invalid email candidates changed from
+quadratic to near-linear scaling.
 
-These are historical observations, not a maintained baseline or release gate.
-Raw samples and intermediate reports are not retained in the working tree; Git
-history contains the original reports under `docs/benchmarks/`.
+These are historical measurements. They are not a maintained baseline or a
+release gate. The working tree does not keep raw samples or intermediate
+reports. Git history keeps the original reports under `docs/benchmarks/`.
 
 ## Measurement context
 
-Ruby 3.3.12 on arm64 macOS, release extension, YJIT disabled, GC enabled.
-Historical C revision: `67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863`.
-Six independent C/Rust process pairs ran sequentially in alternating order,
-with 100 ms target samples and 50 ms warmups per case, without concurrent builds
-or validation jobs. Output correctness was checked before timing; 1,061
-differential observations matched. Times below are arithmetic means.
+We ran the measurements on Ruby 3.3.12 and arm64 macOS. Both extensions used
+release builds. YJIT was disabled and the garbage collector was enabled. The
+historical C revision was
+`67b6b61b5017a6aa6754bc3bb83dd7d95ca4c863`.
 
-All 32 measured cases had an upper paired-bootstrap 95% confidence bound for
-Rust/C time below 1.0. This is exploratory workstation evidence, not a claim
-about every platform or controlled release qualification. Native allocation
-profiles were not collected; Ruby object counts do not measure native memory.
+We ran six independent C/Rust process pairs in alternating order. Each case
+used a 100 ms sample and a 50 ms warmup. No build or validation job ran at the
+same time. We checked output before timing. All 1,061 differential
+observations matched. Table values are arithmetic means.
+
+All 32 measured cases had an upper paired-bootstrap 95% confidence bound below
+1.0 for Rust/C time. These workstation measurements do not predict every
+platform. They are not controlled release evidence. We did not collect native
+allocation profiles. Ruby object counts do not measure native memory.
 
 ## Supplied workloads
 
-General cases time the full URL-then-email two-pass operation. Mail cases time
-URL-only linking of already extracted text nodes; HTML extraction is excluded.
-See [workload definitions](README.md#workloads).
+General cases time the full URL-then-email operation. Mail cases time URL-only
+linking of text nodes that were already extracted. The measurements exclude
+HTML extraction. See [the workload definitions](README.md#workloads).
 
 | General workload | C ns/op | Rust ns/op |
 |---|---:|---:|
@@ -63,11 +67,12 @@ See [workload definitions](README.md#workloads).
 | Large mixed input | 866.567 | 659.072 |
 | Reverse callbacks (64 links) | 17.792 | 17.294 |
 
-The reverse-callback Rust/C ratio was **0.972 (95% CI 0.953–0.993)** after the
-callback fixes, superseding the earlier exploratory regression of 1.094
-(1.074–1.116).
+After the callback fixes, the reverse-callback Rust/C ratio was
+**0.972 (95% CI 0.953–0.993)**. This replaces the earlier exploratory result of
+1.094 (1.074–1.116), which showed a regression.
 
-Identity callbacks on `'http://a.com ' * links`, milliseconds per call:
+Identity callbacks on `'http://a.com ' * links`. Values are milliseconds per
+call:
 
 | Links | Mutable C | Mutable Rust | Frozen C | Frozen Rust |
 |---:|---:|---:|---:|---:|
@@ -76,8 +81,9 @@ Identity callbacks on `'http://a.com ' * links`, milliseconds per call:
 | 16,000 | 2.629 | 2.524 | 2.656 | 2.414 |
 | 64,000 | 10.776 | 9.864 | 10.987 | 9.697 |
 
-Both source types scale approximately linearly. Repeated invalid email
-candidates (`'a@' * repetitions`, no callback), milliseconds per call:
+Both source types scale approximately linearly. The next table shows repeated
+invalid email candidates (`'a@' * repetitions`) with no callback. Values are
+milliseconds per call:
 
 | Repetitions | C | Rust |
 |---:|---:|---:|
@@ -85,6 +91,6 @@ candidates (`'a@' * repetitions`, no callback), milliseconds per call:
 | 4,000 | 12.086 | 0.085 |
 | 16,000 | 190.806 | 0.341 |
 
-At 16,000 repetitions Rust was about **560× faster**, avoiding C's quadratic
-candidate rejection. This adversarial case is not representative of typical
-mail throughput and is not folded into the common-workload headline above.
+At 16,000 repetitions, Rust was about **560 times faster**. It avoids the
+quadratic candidate rejection in C. This adversarial case does not represent
+typical mail traffic. It is not part of the common-workload result above.

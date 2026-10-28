@@ -1,149 +1,125 @@
 # Rinku
 
-Due to the absence of external maintenance, this is now a fully Zendesk owned/maintained gem.
+Rinku is a Ruby gem that turns URLs and email addresses in text into HTML links.
+Zendesk owns and maintains this gem.
 
-Rinku does linking
-==================
+## Install
 
-Rinku is a Ruby library that does autolinking.
-It parses text and turns anything that remotely resembles a link into an HTML link,
-just like the Ruby on Rails `auto_link` method. The native implementation uses
-a safe, byte-oriented Rust parser and a thin Magnus/rb-sys Ruby binding rather
-than regular-expression replacements.
+Install the pre-release from RubyGems:
 
-Rinku is a Ruby Gem
--------------------
+```sh
+gem install zendesk-rinku --pre
+```
 
-Rinku is available as a Ruby gem:
+Version 2.0 requires **CRuby 3.3 or later**. A source build requires Rust and
+Cargo **1.85 or later**, Ruby development headers, a C/C++ compiler, `make`, and
+libclang. The `rb-sys` binding generator uses libclang. Install Rust with
+[rustup](https://rustup.rs/). On Debian or Ubuntu, install `build-essential`,
+`ruby-dev`, and `libclang-dev`. On macOS, install the Xcode command-line tools.
+Install LLVM if the build cannot find libclang. Set `LIBCLANG_PATH` to its
+location when necessary.
 
-    $ gem install zendesk-rinku --pre
+This branch is a pre-release candidate. It has not completed release
+qualification. Read [the validation notes](docs/rust-rewrite.md).
 
-The 2.0 prerelease requires **CRuby 3.3 or newer**. Source builds require
-Rust/Cargo **1.85 or newer**, Ruby development headers, a C/C++ compiler, `make`,
-and libclang (used by rb-sys's binding generator). Install Rust with
-[rustup](https://rustup.rs/); on Debian/Ubuntu install `build-essential`,
-`ruby-dev`, and `libclang-dev`. On macOS install the Xcode command-line tools
-and LLVM if libclang cannot be found (`LIBCLANG_PATH` can select it).
+Clone the source repository:
 
-This branch is a prerelease candidate, not a claim of completed release
-qualification. See [validation and benchmarking](docs/rust-rewrite.md).
+```sh
+git clone https://github.com/zendesk/rinku.git
+```
 
-The Rinku source is available at GitHub:
+## Use Rinku
 
-    $ git clone git://github.com/zendesk/rinku.git
+Require `rinku` and call `Rinku.auto_link`:
 
-Rinku is a standalone library
------------------------------
-
-It exports a single method called `Rinku.auto_link`.
-
-~~~~~ruby
+```ruby
 require 'rinku'
 
-Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0)
-Rinku.auto_link(text, mode=:all, link_attr=nil, skip_tags=nil, flags=0) { |link_text| ... }
-~~~~~~
+Rinku.auto_link(text)
+Rinku.auto_link(text) { |link_text| link_text }
+```
 
-Parses a block of text looking for "safe" urls or email addresses,
-and turns them into HTML links with the given attributes.
+Rinku scans plain text or escaped HTML. It does not escape input. Escape HTML
+before you call `auto_link`. Rinku skips content inside `<a>`, `<pre>`, `<code>`,
+`<kbd>`, and `<script>` tags by default. This prevents links inside existing
+anchors and these other tags.
 
-NOTE: The block of text may or may not be HTML; if the text is HTML,
-Rinku will skip the relevant tags to prevent double-linking and linking
-inside `pre` blocks by default.
+Rinku links URLs that use `http://`, `https://`, or `ftp://`. It also links email
+addresses and uses `mailto:` in their `href` values. Rinku adds `http://` to
+URLs that start with lowercase `www.`.
 
-NOTE: If the input text is HTML, it's expected to be already escaped.
-Rinku will perform no escaping.
+The arguments are:
 
-NOTE: Currently the follow protocols are considered safe and are the
-only ones that will be autolinked.
+* `text`: a Ruby `String` with plain text or escaped HTML.
+* `mode`: a `Symbol`. Use `:all`, `:urls`, or `:email_addresses`. `nil` selects
+  `:all`.
+* `link_attr`: a `String` of HTML attributes to add to each link. Rinku does not
+  sanitize this string. Use trusted attributes.
+  In Rails, use `tag_options` to build this string.
+* `skip_tags`: an `Array` of tag-name strings. `nil` uses `Rinku.skip_tags`; if
+  that value is also `nil`, Rinku uses the default list above. An empty array
+  disables tag skipping. Objects that include `Rinku` also have the
+  `skip_tags` accessor.
+* `flags`: an integer bitmask. `Rinku::AUTOLINK_SHORT_DOMAINS` allows short
+  domains such as `http://intranet`.
+* `&block`: an optional block. Rinku calls it with each link string. The block
+  must return a `String`; Rinku uses it as the link label without escaping it.
+  Return trusted or already escaped content.
 
-    http:// https:// ftp:// mailto://
+For example, set an attribute on each generated link:
 
-Email addresses are also autolinked by default. URLs without a protocol
-specifier but starting with 'www.' will also be autolinked, defaulting to
-the 'http://' protocol.
+```ruby
+Rinku.auto_link('http://www.example.com', :all, 'target="_blank"')
+# => '<a href="http://www.example.com" target="_blank">http://www.example.com</a>'
+```
 
--   `text` is a string in plain text or HTML markup. If the string is formatted in
-HTML, Rinku is smart enough to skip the links that are already enclosed in `<a>`
-tags.`
+Use a block to change the link label:
 
--   `mode` is a symbol, either `:all`, `:urls` or `:email_addresses`,
-which specifies which kind of links will be auto-linked.
+```ruby
+Rinku.auto_link('Visit http://www.example.com') do |_url|
+  'Example site'
+end
+# => 'Visit <a href="http://www.example.com">Example site</a>'
+```
 
--   `link_attr` is a string containing the link attributes for each link that
-will be generated. These attributes are not sanitized and will be include as-is
-in each generated link, e.g.
+Rinku accepts only the stated Ruby types. It does not call `to_str`, `to_int`,
+or `to_ary` to convert arguments. It scans bytes and does not require valid
+UTF-8. It keeps unchanged input bytes and sets generated output to the source's
+current encoding. If Rinku finds no link, it returns the original input object,
+including frozen strings and string subclasses. URL schemes are
+case-insensitive. HTML tag names and `www.` are case-sensitive.
 
-     ~~~~~ruby
-     auto_link('http://www.pokemon.com', :all, 'target="_blank"')
-     # => '<a href="http://www.pokemon.com" target="_blank">http://www.pokemon.com</a>'
-     ~~~~~
+## Rails integration
 
-    This string can be autogenerated from a hash using the Rails `tag_options` helper.
+Load ActionView or Rails before you require `rails_rinku`:
 
--   `skip_tags` is a list of strings with the names of HTML tags that will be skipped
-when autolinking. If `nil`, this defaults to the value of the global `Rinku.skip_tags`,
-which initially returns `nil` and selects the built-in list
-`["a", "pre", "code", "kbd", "script"]`. An empty array disables tag-content
-skipping. The accessor also works on objects that include `Rinku`.
-
--   `flags` is a small Integer bitmask. `Rinku::AUTOLINK_SHORT_DOMAINS` permits
-short domains such as `http://intranet`.
-
-Arguments and callback results are strictly typed; `to_str`, `to_int`, and
-`to_ary` coercions are not accepted. Output preserves source bytes and encoding.
-If no link is found, the original input object is returned, including frozen
-strings and string subclasses. HTML names and `www.` remain case-sensitive.
-
--   `&block` is an optional block argument. If a block is passed, it will
-be yielded for each found link in the text, and its return value will be used instead
-of the name of the link. E.g.
-
-    ~~~~~ruby
-    auto_link('Check it out at http://www.pokemon.com') do |url|
-      "THE POKEMAN WEBSITEZ"
-    end
-    # => 'Check it out at <a href="http://www.pokemon.com">THE POKEMAN WEBSITEZ</a>'
-    ~~~~~~
-
-Rinku is a drop-in replacement for Rails 3.1 `auto_link`
-----------------------------------------------------
-
-Auto-linking functionality has been removed from Rails 3.1,
-and is instead offered as a standalone gem, `rails_autolink`. You can
-choose to use Rinku instead.
-
-~~~~ruby
+```ruby
 require 'rails_rinku'
-~~~~
+```
 
-The `rails_rinku` integration adds `auto_link` to ActionView, including HTML
-escaping, safe output, options, and callbacks. Load ActionView/Rails before
-requiring it. Rails 7.2 and newer use the current tag builder API.
+The integration replaces the removed Rails `auto_link` helper in ActionView's
+`TextHelper`. It escapes unsafe input, applies HTML options, and returns safe
+output. It also passes callbacks to Rinku. Rails 7.2 and later use the current
+tag builder API.
 
-Development
------------
+## Development
+
+From the repository root, run:
 
 ```sh
 bundle install
-bundle exec rake test gc_stress       # optimized extension; stress is isolated
+bundle exec rake test gc_stress
 cargo test -p rinku-core --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
+rustup component add --toolchain nightly-2026-10-01 miri
 cargo +nightly-2026-10-01 miri test -p rinku-core --locked
 ruby tools/package_smoke.rb
 ```
 
-The core forbids unsafe code and does not depend on Ruby. Miri covers that
-production parser, not libruby. CI tests Ruby 3.3, 3.4, and 4.0, GC compaction,
-the source gem, and compatibility with historical C behavior. Expand the Ruby matrix when
-new stable versions are released. See [the rewrite notes](docs/rust-rewrite.md)
-for ownership rules, mutation semantics, and differential testing. Optional local
-benchmarks and the historical C-vs-Rust comparison live in [`benchmark/`](benchmark/README.md);
-benchmark results are not tracked or run in CI.
 
-Releasing a new version
-----------------------------------------------------
+## Releasing a new version
+
 A new version is published to RubyGems.org every time a change to `version.rb` is pushed to the `main` branch.
 In short, follow these steps:
 1. Update `version.rb`,
@@ -158,8 +134,7 @@ To create a pre-release from a non-main branch:
 4. click the “Run workflow” button,
 5. pick your branch from a dropdown.
 
-Rinku has an awesome license
-----------------------------
+## License
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

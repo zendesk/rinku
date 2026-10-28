@@ -39,6 +39,6 @@ pub(crate) fn skip_tag(data: &[u8], tags: &[impl AsRef<[u8]>]) -> usize {
             i += 1;
         }
     }
-    // A valid tag never returns zero, so malformed '<' still makes progress.
+    // Return at least one byte for malformed '<' so the scanner always advances.
     i
 }

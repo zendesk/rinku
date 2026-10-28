@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# JSON-safe observations, shared verbatim by the C and Rust subprocesses.
 require 'base64'
 
 module Compatibility
@@ -27,7 +26,7 @@ module Compatibility
       observation[:without_block] = { result: string(plain), identical: plain.equal?(args.first) }
     end
     observation
-  rescue Exception => e # Include non-StandardError callback exceptions in the protocol.
+  rescue Exception => e # Record errors that do not inherit from StandardError too.
     { exception: e.class.name, message: e.message, callbacks: trace }
   end
 
