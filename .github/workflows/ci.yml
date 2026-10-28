@@ -82,7 +82,7 @@ jobs:
         with:
           toolchain: nightly-2026-10-01
       - run: cargo install cargo-fuzz --version 0.13.2 --locked
-      - run: cargo fuzz run autolink -- -max_total_time=30 -max_len=16384
+      - run: cargo fuzz run autolink -- -dict=fuzz/autolink.dict -max_total_time=30 -max_len=16384
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

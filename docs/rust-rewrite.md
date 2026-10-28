@@ -125,7 +125,7 @@ cargo test -p rinku-core --locked
 rustup component add --toolchain nightly-2026-10-01 miri
 cargo +nightly-2026-10-01 miri test -p rinku-core --locked
 cargo install cargo-fuzz --version 0.13.2 --locked
-cargo +nightly-2026-10-01 fuzz run autolink -- -max_total_time=60 -max_len=16384
+cargo +nightly-2026-10-01 fuzz run autolink -- -dict=fuzz/autolink.dict -max_total_time=60 -max_len=16384
 ruby tools/package_smoke.rb
 ```
 
@@ -134,7 +134,8 @@ tests cover temporary, embedded, and heap strings; invalid encodings; garbage
 collector compaction; heavy allocation; recursive calls; strict callback
 results; exceptions; nonlocal exits; mutation; and no-link identity. The tests
 restore `GC.stress` in `ensure`. Run them separately from timing tests. Fuzzing
-has a time limit. Add each minimized failure to
+uses the committed `fuzz/autolink.dict` dictionary and has a time limit. Run the
+commands above from the repository root. Add each minimized failure to
 `crates/rinku-core/tests/core.rs` as a regression test.
 
 The source gem includes the root workspace manifest, the crate manifests, Rust
