@@ -185,6 +185,85 @@ fn repeated_at_rejection_preserves_later_candidates() {
 }
 
 #[test]
+fn adjacent_urls_and_html_preserve_trimming_and_skipped_tags() {
+    let count = if cfg!(miri) { 64 } else { 16_000 };
+    let input = b"http://a.com<br>www.b.com<br>".repeat(count);
+    let expected = b"<a href=\"http://a.com\">http://a.com</a><br><a href=\"http://www.b.com\">www.b.com</a><br>".repeat(count);
+    for mode in [Mode::All, Mode::Urls] {
+        assert_eq!(
+            auto_link(&input, mode, 0, None, DEFAULT_SKIP_TAGS),
+            Some(expected.clone())
+        );
+    }
+    for (input, expected) in [
+        (
+            b"http://a.com?<br>http://b.com".as_slice(),
+            b"<a href=\"http://a.com\">http://a.com</a>?<br><a href=\"http://b.com\">http://b.com</a>".as_slice(),
+        ),
+        (
+            b"www.a.com&amp;<code>http://b.com</code>www.c.com",
+            b"<a href=\"http://www.a.com\">www.a.com</a>&amp;<code>http://b.com</code><a href=\"http://www.c.com\">www.c.com</a>",
+        ),
+        (
+            b"http://a.com/<",
+            b"<a href=\"http://a.com/\">http://a.com/</a><",
+        ),
+    ] {
+        assert_eq!(link(input), expected);
+        assert_identity_rendering(input, Mode::All, 0);
+    }
+}
+
+#[test]
+fn repeated_www_rejection_preserves_later_candidates() {
+    let prefix = b"www.".repeat(if cfg!(miri) { 64 } else { 16_000 });
+    for boundary in [b"\xc3\xa9".as_slice(), b"\xff", b"\xe2", b"\xe2\x80"] {
+        let rejected = [prefix.as_slice(), boundary].concat();
+        for mode in [Mode::All, Mode::Urls] {
+            assert_eq!(auto_link(&rejected, mode, 0, None, DEFAULT_SKIP_TAGS), None);
+        }
+        let input = [
+            rejected.as_slice(),
+            b"http://a.com <pre>www.hidden.com</pre>www.b.com a@c.com",
+        ]
+        .concat();
+        let expected = [
+            rejected.as_slice(),
+            b"<a href=\"http://a.com\">http://a.com</a> <pre>www.hidden.com</pre><a href=\"http://www.b.com\">www.b.com</a> <a href=\"mailto:a@c.com\">a@c.com</a>",
+        ]
+        .concat();
+        assert_eq!(link(&input), expected);
+    }
+}
+
+#[test]
+fn nested_www_candidates_keep_valid_boundaries() {
+    for (input, expected) in [
+        (
+            b"www.www.com\xe2\x80\x8cwww.b.com".as_slice(),
+            b"<a href=\"http://www.www.com\">www.www.com</a>\xe2\x80\x8c<a href=\"http://www.b.com\">www.b.com</a>".as_slice(),
+        ),
+        (
+            b"www.www.com/\xc3\xa9",
+            b"<a href=\"http://www.www.com/\xc3\xa9\">www.www.com/\xc3\xa9</a>",
+        ),
+        (
+            b"www.www.",
+            b"<a href=\"http://www.www\">www.www</a>.",
+        ),
+        (
+            b"www.www.\xffa@b.com",
+            b"www.www.\xff<a href=\"mailto:a@b.com\">a@b.com</a>",
+        ),
+    ] {
+        assert_eq!(link(input), expected);
+        for mode in [Mode::All, Mode::Urls, Mode::Emails] {
+            assert_identity_rendering(input, mode, 0);
+        }
+    }
+}
+
+#[test]
 fn active_search_chunk_boundaries() {
     for length in [31, 32, 255, 256, 257, 511, 512, 513] {
         let prefix = vec![b'x'; length];

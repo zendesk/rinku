@@ -53,6 +53,12 @@ module Workloads
         input = 'a@' * count
         cases << Case.new(name: "supplemental/repeated_at_#{count}", input: input,
           expected: input, operation: ->(text) { Rinku.auto_link(text) })
+        cases << Case.new(name: "supplemental/adjacent_html_#{count}", input: 'http://a.com<br>' * count,
+          expected: '<a href="http://a.com">http://a.com</a><br>' * count,
+          operation: ->(text) { Rinku.auto_link(text) })
+        input = ('www.' * count) + 'é'
+        cases << Case.new(name: "supplemental/rejected_www_#{count}", input: input,
+          expected: input, operation: ->(text) { Rinku.auto_link(text) })
       end
     end
     cases

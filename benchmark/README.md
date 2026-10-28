@@ -40,7 +40,8 @@ were checked against C before the rewrite.
   time HTML extraction. It does not link email addresses in these cases.
 * Supplemental cases test no links, large input, reverse callbacks, mutable and
   frozen identity callbacks with 1,000 to 64,000 links, and repeated invalid
-  email candidates with 1,000 to 16,000 repetitions.
+  email candidates, adjacent URL/HTML fragments, and rejected `www.` candidates
+  with 1,000 to 16,000 repetitions.
 
 ## Native memory
 

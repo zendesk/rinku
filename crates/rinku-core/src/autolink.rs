@@ -80,10 +80,16 @@ impl Scanner {
                 continue;
             }
             let parsed = match action {
-                Action::Www => www(input, at, self.last_link).map(|range| Link {
-                    range,
-                    kind: Kind::Www,
-                }),
+                Action::Www => match www(input, at, self.last_link) {
+                    Ok(range) => Some(Link {
+                        range,
+                        kind: Kind::Www,
+                    }),
+                    Err(next) => {
+                        self.end = next;
+                        continue;
+                    }
+                },
                 Action::Email => email(input, at, self.last_link).map(|range| Link {
                     range,
                     kind: Kind::Email,
@@ -246,7 +252,8 @@ fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
             return None;
         }
     } else {
-        while end < data.len() && !unicode_space(&data[end..]) {
+        // Trimming always stops at '<'.
+        while end < data.len() && data[end] != b'<' && !unicode_space(&data[end..]) {
             end += 1;
         }
     }
@@ -254,20 +261,25 @@ fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
     (end > 0).then_some(end)
 }
 
-fn www(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
+// On rejection, return the next offset that can contain a link candidate.
+fn www(input: &[u8], at: usize, last: usize) -> Result<Range<usize>, usize> {
     // C treated bytes outside ASCII letters and digits as punctuation, including NUL.
     if at > last && input[at - 1].is_ascii_alphanumeric() {
-        return None;
+        return Err(at + 1);
     }
     let data = &input[at..];
     if !data.starts_with(b"www.") {
-        return None;
+        return Err(at + 1);
     }
     let end = scan_domain(data, false);
     if end == 0 {
-        return None;
+        return Err(at + 1);
     }
-    Some(at..at + scan_link_tail(data, end)?)
+    // A rejected Unicode boundary also rejects every nested www. candidate.
+    // The scanned ASCII domain contains no ':', '@', or '<', so skipping it
+    // cannot hide another kind of candidate. Resume at the boundary itself.
+    let tail = scan_link_tail(data, end).ok_or(at + end)?;
+    Ok(at..at + tail)
 }
 
 fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {

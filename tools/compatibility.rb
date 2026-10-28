@@ -65,6 +65,11 @@ module Compatibility
       '<a><a>http://example.com</a>http://example.org</a>',
       '< malformed http://example.com', 'http://x http://x. http://.x.com http://-x.com',
       'a+b@d.com+e@f.com', 'a@b.c a@b.c. a@b.c..', 'a@b@c.com later@d.com',
+      'http://a.com?<br>http://b.com', 'http://a.com/<',
+      'www.a.com&amp;<code>http://b.com</code>www.c.com',
+      'www.www.éhttp://a.com <pre>www.hidden.com</pre>www.b.com a@c.com',
+      "www.www.com\u200cwww.b.com", 'www.www.com/é', 'www.www.',
+      "www.www.\xffa@b.com".b,
       '&lt;http://www.google.com&gt;)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)'
     ].each_with_index { |input, i| add.call("parser/#{i}", [input]) }
     [0, 1, 2, -1].each { |flag| add.call("flags/#{flag}", ['http://x http://xy', nil, nil, nil, flag]) }
