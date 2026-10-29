@@ -94,3 +94,50 @@ milliseconds per call:
 At 16,000 repetitions, Rust was about **560 times faster**. It avoids the
 quadratic candidate rejection in C. This adversarial case does not represent
 typical mail traffic. It is not part of the common-workload result above.
+
+## Always-owned input comparison (2026-10-28)
+
+This experiment changed the no-block binding to copy source and attribute bytes
+into Rust-owned buffers before parsing. We compared it with the borrowing Rust build
+at `2888312d26cacf27e6643a2443df3eea4d141d9f` and a fresh build of the same
+historical C revision listed above.
+
+The comparison used Ruby 3.3.12 on arm64 macOS, Rust 1.99.1 release builds,
+YJIT disabled, and GC enabled. We ran the existing `benchmark/worker.rb` in
+six rounds, using each permutation of the three implementations once. Each
+worker checked outputs before timing all 38 workloads, with a 200 ms target
+sample and 100 ms warmup. No builds or tests ran alongside timing.
+
+Common-workload ratios are equal-weight geometric means of per-case mean
+times. Confidence intervals use 10,000 paired bootstrap resamples of the six
+rounds (seed 20261028).
+
+| Workloads | Copy / borrow time (95% CI) | Copy / C time (95% CI) |
+|---|---:|---:|
+| General (11 cases) | 1.115 (1.067–1.163) | 0.830 (0.794–0.864) |
+| Mail (7 cases) | 1.070 (1.027–1.113) | 0.853 (0.830–0.876) |
+
+Copying adds about **11.5%** to general-workload time and **7.0%** to mail time,
+while still using **17.0%** and **14.7% less time than C**, respectively.
+All 38 cases had lower mean times than C, with individual upper paired-bootstrap
+95% confidence bounds below 1.0. Selected arithmetic means:
+
+| Workload | Borrowing Rust µs/op | Copying Rust µs/op | C µs/op |
+|---|---:|---:|---:|
+| Plain text, two passes | 0.190 | 0.254 | 0.378 |
+| No links (13,312 bytes) | 0.904 | 1.107 | 5.318 |
+| Large mixed input | 632.870 | 587.517 | 837.919 |
+| Reverse callbacks (64 links) | 16.527 | 16.394 | 18.072 |
+
+The small no-link case shows the largest relative copying cost. The large-input
+speedup is an observed result, not a general guarantee that copying is faster.
+Callback inputs already used owned snapshots.
+
+Ruby allocations per operation matched between the two Rust builds. The new
+native buffers additionally hold the source and attribute bytes; this experiment
+did not profile native peak memory. Local raw samples, library hashes, summaries,
+and confidence intervals are in the ignored `benchmark/results/copying/` directory.
+
+The copying build passed 73 Ruby tests, 11 GC-stress tests, 11 Rust tests, formatting,
+Clippy, and all 1,075 C differential observations. We kept copying for its smaller
+unsafe borrowing scope while retaining the measured advantage over C.

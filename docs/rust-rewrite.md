@@ -38,21 +38,45 @@ array, but the Ruby array keeps the original strings marked. `LazyId` stores
 permanent interned Ruby IDs, not unmarked heap values. The parser has no global
 mutable state. Each recursive call has its own scanner, buffers, and snapshots.
 
-The no-block path borrows Ruby buffers only during a Ruby-free core call. Rust's
-system allocator cannot start Ruby garbage collection. The callback path uses
-owned snapshots. It copies callback results into the renderer before another
-Ruby call. Each unsafe binding operation states its rooting, GVL, protection,
-and lifetime assumptions.
+**Never borrow Ruby string storage in the binding or core.** Source text,
+attributes, skip tags, and callback results all pass through `bytes()` before
+their contents are used. It uses Magnus's safe `RString::to_bytes()` conversion
+(the `bytes` feature), then transfers the owned allocation into `Vec<u8>`.
+This preserves arbitrary bytes without transcoding or calling Ruby overrides.
+Only Rust-owned byte slices reach the scanner and renderer. Magnus handles the
+short internal borrow needed to copy; the binding creates no references into
+Ruby string storage. Each remaining unsafe binding operation states its rooting,
+GVL, protection, and lifetime assumptions.
 
 Frozen input uses an owned snapshot and needs no refresh checks. Mutable input
 also uses a frozen Ruby copy-on-write alias rooted on the native stack. Ruby
 must detach shared storage before it can edit the source. The binding can then
-compare buffer pointers in constant time instead of scanning the unread suffix.
-If the source keeps its original length and the pointers differ, the binding
-copies unread bytes and creates a new alias. It copies embedded strings with a
-bounded operation. It obtains pointers only in a Ruby-free scope and does not
-keep them across callbacks or allocation.
+compare buffer addresses in constant time instead of copying unchanged text
+after every callback. `shares_storage()` returns only a boolean: it does not
+dereference the pointers or turn them into slices. If the source keeps its
+original length and the pointers differ, the binding takes an owned copy,
+refreshes unread bytes, and creates a new alias. Embedded strings require a
+bounded copy. Pointers exist only in the identity check and never survive a
+callback or allocation.
 Pointer equality alone would miss edits without the frozen alias.
+
+### Enforcing owned string access
+
+`clippy.toml` disallows Magnus's string-borrowing methods, including byte and
+text slices, lossy text views, and borrowing iterators. It also disallows the
+raw rb-sys string-pointer accessors. The binding denies
+`clippy::disallowed_methods`; CI runs this with the usual command:
+
+```sh
+cargo clippy --workspace --all-targets --locked -- -D warnings
+```
+
+Clippy resolves API identities, so import aliases and fully qualified calls
+are checked too. There are two expression-local exceptions: the pointer-only
+identity check in `shares_storage()` and `StringValueCStr` tag validation,
+which discards the returned pointer. Neither exposes a borrowed byte view.
+Keep these exceptions narrow. This is an API guardrail, not a proof against
+arbitrary new unsafe code; review the list when changing binding dependencies.
 
 ## Callback mutation contract
 
@@ -149,7 +173,7 @@ The current version is `2.0.0.pre.1`. Local tools do not publish the gem. The
 GitHub Actions publish workflow runs manually. It requires an HTTPS URL for
 reviewed, controlled performance and native-memory qualification evidence.
 
-Current local validation includes Ruby tests, 1,061 differential observations,
+Current local validation includes Ruby tests, 1,075 differential observations,
 optimized garbage-collector stress and compaction, Rust tests, Clippy,
 formatting, Rust 1.85 compilation, pinned Miri, bounded fuzzing, and source-gem
 loading with ActionView on Ruby 3.3, 3.4, and 4.0. The

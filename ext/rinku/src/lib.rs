@@ -1,5 +1,6 @@
 // Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 #![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::disallowed_methods)]
 
 use magnus::{
     encoding::{EncodingCapable, Index},
@@ -40,9 +41,9 @@ fn check_type(value: Value, kind: ruby_value_type) -> Result<(), Error> {
 }
 
 fn bytes(string: RString) -> Vec<u8> {
-    // SAFETY: The GVL is held and Ruby roots the string. Do not call Ruby while
-    // the slice is borrowed. to_vec copies the bytes before the borrow ends.
-    unsafe { string.as_slice() }.to_vec()
+    // Magnus copies without transcoding. Consuming the unique Bytes transfers
+    // its allocation into Vec; no reference to Ruby storage reaches our code.
+    string.to_bytes().into()
 }
 
 fn ruby_string(ruby: &Ruby, bytes: &[u8], encoding: Index) -> Result<RString, Error> {
@@ -86,6 +87,7 @@ fn tag_bytes(tags: RArray) -> Result<Vec<Vec<u8>>, Error> {
         // SAFETY: tags and the stack root tag. The closure has no Rust values
         // that a Ruby longjmp could skip.
         let mut raw = tag.as_raw();
+        #[allow(clippy::disallowed_methods)] // Validation only; discard the pointer.
         protect(|| unsafe {
             rb_sys::rb_string_value_cstr(&mut raw);
             0
@@ -179,27 +181,40 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
 }
 
 fn without_callback(args: &Arguments) -> Option<Vec<u8>> {
-    // SAFETY: args and its handles are rooted. The GVL is held, and this path
-    // makes no Ruby calls. Rust allocation cannot start Ruby GC.
-    let input = unsafe { args.text.as_slice() };
-    // SAFETY: This is the same Ruby-free region. VM arguments root attributes.
-    let attributes = args.attrs.as_ref().map(|a| unsafe { a.as_slice() });
-    let attributes = attributes.map(|a| &a[trim_start(a)..]);
+    let input = bytes(args.text);
+    let attributes = args.attrs.map(bytes);
+    let attributes = attributes.as_deref().map(|a| &a[trim_start(a)..]);
     if args.tags.is_none() {
-        rinku_core::auto_link(input, args.mode, args.flags, attributes, DEFAULT_SKIP_TAGS)
+        rinku_core::auto_link(&input, args.mode, args.flags, attributes, DEFAULT_SKIP_TAGS)
     } else {
-        rinku_core::auto_link(input, args.mode, args.flags, attributes, &args.tag_snapshot)
+        rinku_core::auto_link(
+            &input,
+            args.mode,
+            args.flags,
+            attributes,
+            &args.tag_snapshot,
+        )
     }
 }
 
 fn frozen_snapshot(text: RString) -> Result<RString, Error> {
-    // SAFETY: The VM or stack roots text. The GVL is held, and no Ruby slice is
-    // borrowed. Ruby shares eligible buffers with this frozen alias. A later
+    // SAFETY: The VM or stack roots text. The GVL is held.
+    // Ruby shares eligible buffers with this frozen alias. A later
     // write must detach the buffer. Ruby copies embedded strings instead.
     // Call rb_str_new_frozen directly so String overrides cannot change behavior.
     let raw = protect(|| unsafe { rb_sys::rb_str_new_frozen(text.as_raw()) })?;
     // SAFETY: Ruby returned a valid string. Root it on this stack before another call.
     Ok(RString::from_value(unsafe { Value::from_raw(raw) }).unwrap())
+}
+
+fn shares_storage(text: RString, snapshot: RString) -> bool {
+    // SAFETY: Both handles are rooted on the native stack and the GVL is held.
+    // No Ruby allocation or callback occurs between these pointer reads. Only
+    // compare addresses: never dereference them, create slices, or retain them.
+    #[allow(clippy::disallowed_methods)] // Pointer identity only; no byte access.
+    unsafe {
+        rb_sys::RSTRING_PTR(text.as_raw()) == rb_sys::RSTRING_PTR(snapshot.as_raw())
+    }
 }
 
 fn refresh_source(
@@ -208,20 +223,15 @@ fn refresh_source(
     input: &mut [u8],
     unread: usize,
 ) -> Result<(), Error> {
-    {
-        // SAFETY: Both handles are rooted on the native stack and the GVL is
-        // held. This scope makes no Ruby calls. Neither pointer leaves the scope.
-        let current = unsafe { text.as_slice() };
-        let previous = unsafe { snapshot.as_slice() };
-        // Keep the last snapshot after a length change; C behavior was unsafe.
-        // Equal pointers mean unchanged only because the frozen alias forces
-        // Ruby to detach shared storage before a write.
-        if current.len() != input.len() || current.as_ptr() == previous.as_ptr() {
-            return Ok(());
-        }
-        // Refresh only unread bytes; the renderer owns the emitted prefix.
-        input[unread..].copy_from_slice(&current[unread..]);
+    // Keep the last snapshot after a length change; C behavior was unsafe.
+    // Shared storage means unchanged only because the frozen alias forces
+    // Ruby to detach it before a write.
+    if text.len() != input.len() || shares_storage(text, *snapshot) {
+        return Ok(());
     }
+    let current = bytes(text);
+    // Refresh only unread bytes; the renderer owns the emitted prefix.
+    input[unread..].copy_from_slice(&current[unread..]);
     *snapshot = frozen_snapshot(text)?;
     Ok(())
 }
@@ -256,20 +266,18 @@ fn with_callback(
         );
         let result = call_link(ruby, block, &input[link.range.clone()], encoding)?;
         check_type(result, ruby_value_type::RUBY_T_STRING)?;
-        let rendered = RString::from_value(result).unwrap();
-        // SAFETY: The stack roots result and the GVL is held. Copy it into the
-        // renderer before another Ruby call. The borrow ends at this statement.
-        renderer.end_link(unsafe { rendered.as_slice() });
+        let rendered = bytes(RString::from_value(result).unwrap());
+        renderer.end_link(&rendered);
         if let Some(snapshot) = &mut source_snapshot {
             refresh_source(args.text, snapshot, &mut input, link.range.end)?;
         }
         if let (Some(attrs), Some(snapshot)) = (args.attrs, &mut attributes) {
-            refresh(attrs, snapshot);
+            *snapshot = bytes(attrs);
         }
         if let Some(tags) = args.tags {
             // Treat a new NUL in mutated tag bytes as the C-string terminator.
             for (i, snapshot) in args.tag_snapshot.iter_mut().enumerate() {
-                refresh(tags.entry::<RString>(i as isize)?, snapshot);
+                *snapshot = bytes(tags.entry::<RString>(i as isize)?);
             }
         }
     }
@@ -295,14 +303,6 @@ fn trim_start(a: &[u8]) -> usize {
     a.iter()
         .take_while(|&&c| matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c))
         .count()
-}
-
-fn refresh(string: RString, snapshot: &mut Vec<u8>) {
-    // SAFETY: The VM or stack roots string, and the GVL is held. This borrow
-    // makes no Ruby calls. Rust allocation cannot start Ruby GC.
-    let current = unsafe { string.as_slice() };
-    snapshot.clear();
-    snapshot.extend_from_slice(current);
 }
 
 #[magnus::init]

@@ -104,6 +104,10 @@ tag builder API.
 
 ## Development
 
+The Rust binding copies Ruby string bytes into owned buffers before using
+them. Clippy rejects borrowing APIs; see the
+[ownership boundary and enforcement rules](docs/rust-rewrite.md#enforcing-owned-string-access).
+
 From the repository root, run:
 
 ```sh
