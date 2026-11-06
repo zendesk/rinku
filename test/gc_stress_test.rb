@@ -114,7 +114,7 @@ class GCStressTest < Minitest::Test
   end
 
   def test_attribute_offset_is_clamped_after_shrink_and_retained_after_growth
-    # Resizing is deliberately Rust-only: C retained a pointer into this string.
+    # Test resizing with Rust only. C retains a pointer into this string.
     attributes = +'  rel=x'
     trace = []
     output = stressed do

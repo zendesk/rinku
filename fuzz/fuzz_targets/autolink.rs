@@ -3,7 +3,7 @@ use libfuzzer_sys::fuzz_target;
 use rinku_core::{auto_link, link_with, Mode, Scanner, DEFAULT_SKIP_TAGS};
 
 fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRef<[u8]>]) {
-    // Seed a successful scan even when arbitrary source bytes contain no links.
+    // Add known links so arbitrary fuzz data still exercises a successful scan.
     let mut input = b"http://seed.com a@seed.com ".to_vec();
     input.extend_from_slice(data);
     input.extend_from_slice(b" <pre>www.a.com</pre> http://b.com a@b.com");
@@ -19,8 +19,8 @@ fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRe
         assert!(link.range.end <= length);
         end = link.range.end;
 
-        // Change only unread bytes, without changing the scanner's offset space.
-        // Both replacement bytes and the position are controlled by the fuzzer.
+        // Change only unread bytes. Keep the input length fixed so offsets stay valid.
+        // Let the fuzzer choose the replacement bytes and their start position.
         if end < length && !data.is_empty() {
             let selector = usize::from(data[calls % data.len()]);
             let start = end + selector % (length - end);
@@ -37,8 +37,8 @@ fuzz_target!(|data: &[u8]| {
     if data.len() > 16_384 {
         return;
     }
-    // Keep generated configuration small, except for one bounded tag that is
-    // deliberately longer than the entire original input (and any suffix).
+    // Limit generated tags to 32 bytes, except one tag longer than the fuzz input.
+    // This checks that tag parsing stays within the input bounds.
     let generated = &data[..data.len().min(32)];
     let prefix = &generated[..generated.len().min(4)];
     let custom_tags = [

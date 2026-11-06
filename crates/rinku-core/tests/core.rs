@@ -111,10 +111,10 @@ fn truncated_sequences_and_every_byte() {
         for prefix in [b"http://a.com/".as_slice(), b"www.a.com/", b"http://a.com"] {
             let text = [prefix, suffix].concat();
             let expected = if prefix == b"http://a.com" {
-                // A high byte immediately after the domain rejects the link.
+                // A high byte after the domain makes this candidate invalid.
                 text.clone()
             } else {
-                // After `/`, incomplete UTF-8 bytes stay in the URL and label.
+                // After `/`, the parser keeps incomplete UTF-8 bytes in the URL and label.
                 let scheme = if prefix.starts_with(b"www.") {
                     b"http://".as_slice()
                 } else {
@@ -137,7 +137,7 @@ fn truncated_sequences_and_every_byte() {
 
 #[test]
 fn bounded_arbitrary_bytes_have_equivalent_rendering_and_valid_ranges() {
-    // Use a fixed seed and bounded inputs for reproducible Miri runs.
+    // Use bounded inputs and a fixed seed so Miri runs are reproducible.
     let mut random = 0x1234_5678_u64;
     let count = if cfg!(miri) { 64 } else { 4096 };
     for iteration in 0..count {
@@ -292,7 +292,7 @@ fn schemes_preserve_c_case_folding_and_rejected_near_matches() {
 
 #[test]
 fn trimming_immediately_around_seven_pass_limit() {
-    // These exact results are also compared with C in tools/compatibility.rb.
+    // Keep these trim results in sync with the C compatibility test.
     for passes in [6_usize, 7, 8] {
         for (suffix, retained) in [
             (
@@ -306,8 +306,7 @@ fn trimming_immediately_around_seven_pass_limit() {
         ] {
             let input = [b"http://a.com".as_slice(), &suffix].concat();
             let label = [b"http://a.com".as_slice(), retained].concat();
-            // C stops after seven changing passes, leaving bytes in the href
-            // and label even when another pass would trim them.
+            // After seven trim passes, C keeps any remaining suffix in the href and label.
             let expected = [
                 b"<a href=\"".as_slice(),
                 &label,
@@ -338,8 +337,7 @@ fn trimming_immediately_around_seven_pass_limit() {
 
 #[test]
 fn competing_active_bytes_at_exact_chunk_edges() {
-    // Each entry records the token, active-byte offset within it, and C's
-    // rendered bytes in All, Urls, and Emails modes, respectively.
+    // Compare C's output in each mode to test candidate selection at chunk boundaries.
     type Candidate = (&'static [u8], usize, [&'static [u8]; 3]);
     let first_group: &[Candidate] = &[
         (
@@ -356,7 +354,7 @@ fn competing_active_bytes_at_exact_chunk_edges() {
                 b"www.a.com",
             ],
         ),
-        // The search recognizes W, but C's www parser rejects uppercase WWW.
+        // C's search sees uppercase `W`, but its parser rejects uppercase `WWW`.
         (b"WWW.a.com", 0, [b"WWW.a.com"; 3]),
     ];
     let second_group: &[Candidate] = &[
@@ -382,7 +380,7 @@ fn competing_active_bytes_at_exact_chunk_edges() {
     for offset in [255, 256, 257] {
         for first in first_group {
             for second in second_group {
-                // Both orders exercise selection between the two search groups.
+                // Test both candidate orders. The scanner can find either search group first.
                 for (first, second) in [(first, second), (second, first)] {
                     let padding = vec![b' '; offset - first.1];
                     let input = [padding.as_slice(), first.0, b" ", second.0].concat();

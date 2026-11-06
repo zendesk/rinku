@@ -12,15 +12,15 @@ gem install zendesk-rinku --pre
 ```
 
 Version 2.0 requires **CRuby 3.3 or later**. A source build requires Rust and
-Cargo **1.85 or later**, Ruby development headers, a C/C++ compiler, `make`, and
-libclang. The `rb-sys` binding generator uses libclang. Install Rust with
-[rustup](https://rustup.rs/). On Debian or Ubuntu, install `build-essential`,
-`ruby-dev`, and `libclang-dev`. On macOS, install the Xcode command-line tools.
-Install LLVM if the build cannot find libclang. Set `LIBCLANG_PATH` to its
-location when necessary.
+Cargo **1.85 or later**. It also requires Ruby development headers, a C/C++
+compiler, `make`, and libclang. The `rb-sys` binding generator uses libclang.
+Install Rust with [rustup](https://rustup.rs/). On Debian or Ubuntu, install
+`build-essential`, `ruby-dev`, and `libclang-dev`. On macOS, install the Xcode
+command-line tools. If the build cannot find libclang, install LLVM. Set
+`LIBCLANG_PATH` to the libclang location when necessary.
 
-This branch is a pre-release candidate. It has not completed release
-qualification. Read [the validation notes](docs/rust-rewrite.md).
+This branch is a pre-release candidate. Release qualification is not complete.
+Read [the validation notes](docs/rust-rewrite.md).
 
 Clone the source repository:
 
@@ -104,8 +104,8 @@ tag builder API.
 
 ## Development
 
-The Rust binding copies Ruby string bytes into owned buffers before using
-them. Clippy rejects borrowing APIs; see the
+The Rust binding copies Ruby string bytes into owned buffers before it uses them.
+Clippy rejects APIs that borrow Ruby string storage. See the
 [ownership boundary and enforcement rules](docs/rust-rewrite.md#enforcing-owned-string-access).
 
 From the repository root, run:

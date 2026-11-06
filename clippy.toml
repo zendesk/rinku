@@ -1,14 +1,14 @@
-# Ruby string bytes must enter the binding through the owned bytes() conversion.
+# Copy Ruby string bytes into owned buffers with `bytes()` before use.
 disallowed-methods = [
-  { path = "magnus::RString::as_slice", reason = "Copy Ruby strings with bytes(); never borrow their storage." },
-  { path = "magnus::RString::as_str", reason = "Copy Ruby strings with bytes(); preserve arbitrary bytes." },
-  { path = "magnus::RString::test_as_str", reason = "Copy Ruby strings with bytes(); never borrow their storage." },
-  { path = "magnus::RString::to_string_lossy", reason = "May borrow Ruby storage and changes invalid UTF-8; use bytes()." },
-  { path = "magnus::RString::codepoints", reason = "Iterator borrows Ruby storage; use an owned snapshot." },
-  { path = "magnus::RString::char_bytes", reason = "Iterator borrows Ruby storage; use an owned snapshot." },
-  { path = "rb_sys::RSTRING_PTR", reason = "Ruby storage pointers are allowed only for shares_storage() identity checks." },
+  { path = "magnus::RString::as_slice", reason = "Use bytes() to copy Ruby strings. Never borrow their storage." },
+  { path = "magnus::RString::as_str", reason = "Use bytes() to copy Ruby strings and preserve arbitrary bytes." },
+  { path = "magnus::RString::test_as_str", reason = "Use bytes() to copy Ruby strings. Never borrow their storage." },
+  { path = "magnus::RString::to_string_lossy", reason = "This method can borrow Ruby storage and replace invalid UTF-8. Use bytes() instead." },
+  { path = "magnus::RString::codepoints", reason = "This iterator borrows Ruby storage. Use an owned snapshot." },
+  { path = "magnus::RString::char_bytes", reason = "This iterator borrows Ruby storage. Use an owned snapshot." },
+  { path = "rb_sys::RSTRING_PTR", reason = "Use Ruby storage pointers only in shares_storage() to compare addresses." },
   { path = "rb_sys::stable_api::StableApiDefinition::rstring_ptr", reason = "Do not bypass the owned Ruby string boundary." },
-  { path = "rb_sys::rb_string_value_ptr", reason = "Copy Ruby strings with bytes(); never borrow their storage." },
-  { path = "rb_sys::rb_string_value_cstr", reason = "Allowed only for tag validation that discards the returned pointer." },
-  { path = "rb_sys::rb_str_subpos", reason = "Returns a pointer into Ruby storage; slice an owned snapshot instead." },
+  { path = "rb_sys::rb_string_value_ptr", reason = "Use bytes() to copy Ruby strings. Never borrow their storage." },
+  { path = "rb_sys::rb_string_value_cstr", reason = "Use this method only to validate tag strings. Discard the returned pointer." },
+  { path = "rb_sys::rb_str_subpos", reason = "This method returns a pointer into Ruby storage. Slice an owned snapshot instead." },
 ]

@@ -26,7 +26,7 @@ module Compatibility
       observation[:without_block] = { result: string(plain), identical: plain.equal?(args.first) }
     end
     observation
-  rescue Exception => e # Record errors that do not inherit from StandardError too.
+  rescue Exception => e # Record exceptions outside StandardError too.
     { exception: e.class.name, message: e.message, callbacks: trace }
   end
 
@@ -102,8 +102,8 @@ module Compatibility
       tags[0] = 'div'
       link
     })
-    # Only in-place, same-length edits belong in the C oracle. Resizing can
-    # invalidate C's retained pointers and is covered by Rust-only Ruby tests.
+    # Keep source lengths fixed in C comparisons. C retains string pointers.
+    # Rust-only Ruby tests cover resize cases.
     source = +'before http://a.com after'
     add.call('mutation/emitted_current_and_unread_bytes', [source], ->(link) {
       source[0, 6] = 'BEFORE'
@@ -171,7 +171,7 @@ module Compatibility
           cases["scanner/trim/#{mode}/#{passes}/#{i}"] = observe(['http://a.com' + suffix, mode])
         end
       end
-      # Offsets refer to the active byte itself, not to the token or padding.
+      # The offset marks the active byte, not the token start or padding.
       first_group = [['<pre>http://hidden.com</pre>', 0], ['www.a.com', 0], ['WWW.a.com', 0]]
       second_group = [['http://b.com', 4], ['a@b.com', 1]]
       [255, 256, 257].each do |offset|

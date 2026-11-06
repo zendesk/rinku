@@ -2,7 +2,7 @@ use std::ops::Range;
 
 pub const SHORT_DOMAINS: u32 = 1;
 const ACTIVE_SEARCH_CHUNK_BYTES: usize = 256;
-// Keep C's initial pass and limit of six additional changing passes.
+// Match C's limit of seven end-trimming passes.
 const MAX_TRIM_PASSES: usize = 7;
 
 #[derive(Clone, Copy, Debug)]
@@ -25,8 +25,8 @@ pub struct Link {
     pub kind: Kind,
 }
 
-/// Stores offsets instead of pointers to allow callers to change unread bytes between scans.
-/// Keep the input length unchanged so those offsets remain valid.
+/// Stores byte offsets, not pointers, so callers can change unread bytes between scans.
+/// Keep the input length unchanged so the offsets remain valid.
 pub struct Scanner {
     end: usize,
     last_link: usize,
@@ -93,8 +93,8 @@ impl Scanner {
         }
         let emails = matches!(self.mode, Mode::All);
         let mut offset = 0;
-        // Bounded chunks prevent repeated lookahead from rescanning the full suffix.
-        // memchr searches bytes safely and does not require valid UTF-8.
+        // Search in bounded chunks. This prevents each lookahead from scanning the full suffix.
+        // `memchr` searches raw bytes and accepts invalid UTF-8.
         for chunk in data.chunks(ACTIVE_SEARCH_CHUNK_BYTES) {
             let first = memchr::memchr3(b'<', b'w', b'W', chunk);
             let rest = &chunk[..first.unwrap_or(chunk.len())];
@@ -113,7 +113,7 @@ impl Scanner {
 }
 
 pub(crate) fn space(c: u8) -> bool {
-    // Match Ruby's rb_isspace, not Rust's broader ASCII whitespace set.
+    // Match Ruby's `rb_isspace`, not Rust's broader ASCII whitespace set.
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
 }
 
@@ -136,7 +136,7 @@ fn scan_domain(data: &[u8], short: bool) -> usize {
     }
     let mut dots = 0;
     let mut i = 0;
-    // Keep the historical rule that does not classify the final byte.
+    // Match C: do not classify the final byte as part of the domain.
     while i < data.len() - 1 {
         match data[i] {
             b'.' => dots += 1,
@@ -158,7 +158,7 @@ fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
     }
     while end > 0 {
         match data[end - 1] {
-            // C's strchr also matches its terminating NUL.
+            // C's `strchr` also matches the terminating NUL byte.
             b'?' | b'!' | b'.' | b',' | 0 => end -= 1,
             b';' => {
                 if end < 2 {
@@ -228,7 +228,6 @@ fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
             return None;
         }
     } else {
-        // Trimming always stops at '<'.
         while end < data.len() && data[end] != b'<' && !unicode_space(&data[end..]) {
             end += 1;
         }
@@ -237,9 +236,10 @@ fn scan_link_tail(data: &[u8], mut end: usize) -> Option<usize> {
     (end > 0).then_some(end)
 }
 
-// On rejection, return the next offset that can contain a link candidate.
+// Return a resume offset on rejection.
+// This lets the scanner skip invalid candidates without missing later links.
 fn www(input: &[u8], at: usize, last: usize) -> Result<Range<usize>, usize> {
-    // C treated bytes outside ASCII letters and digits as punctuation, including NUL.
+    // Match C: every byte outside ASCII letters and digits is punctuation, including NUL.
     if at > last && input[at - 1].is_ascii_alphanumeric() {
         return Err(at + 1);
     }
@@ -251,9 +251,9 @@ fn www(input: &[u8], at: usize, last: usize) -> Result<Range<usize>, usize> {
     if end == 0 {
         return Err(at + 1);
     }
-    // A rejected Unicode boundary also rejects every nested www. candidate.
-    // The scanned ASCII domain contains no ':', '@', or '<', so skipping it
-    // cannot hide another kind of candidate. Resume at the boundary itself.
+    // Resume at the Unicode boundary after a rejected candidate.
+    // The ASCII domain has no ':', '@', or '<', so this skip cannot hide URL or email candidates.
+    // Nested `www.` candidates share the rejected boundary and are invalid too.
     let tail = scan_link_tail(data, end).ok_or(at + end)?;
     Ok(at..at + tail)
 }
@@ -282,7 +282,7 @@ fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
         }
         if c == b'@' {
             ats += 1;
-            // Reject this candidate. The outer scanner can still test later addresses.
+            // Reject this candidate at the second `@`. The outer scan can find later addresses.
             if ats > 1 {
                 return None;
             }

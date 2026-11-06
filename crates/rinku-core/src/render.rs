@@ -1,6 +1,6 @@
 use crate::{Kind, Link};
 
-/// Create output only after the first link so callers can preserve input identity.
+/// Allocate output only when a link exists. This preserves input identity when no link exists.
 #[derive(Default)]
 pub struct Renderer {
     output: Option<Vec<u8>>,

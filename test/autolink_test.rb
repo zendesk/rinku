@@ -201,7 +201,7 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
   end
 
   def test_does_not_autolink_unicode_urls
-    # The final character is Cyrillic U+0435, not Latin e.
+    # The final character is Cyrillic `е` (U+0435), not Latin `e`.
     url = "http://examplе.com"
     assert_equal url, Rinku.auto_link(url)
     assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
@@ -314,7 +314,7 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
 
     assert_linked "&lt;<a href=\"http://www.google.com\">http://www.google.com</a>&gt;)", "&lt;http://www.google.com&gt;)"
 
-    # The six-pass limit can leave invalid HTML. Keep this output for compatibility.
+    # C's trim limit can produce invalid HTML. Keep this output for compatibility.
     assert_linked "&lt;<a href=\"http://www.google.com&gt;\">http://www.google.com&gt;</a>)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)", "&lt;http://www.google.com&gt;)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)"
 
   end

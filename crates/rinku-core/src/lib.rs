@@ -25,7 +25,7 @@ pub fn auto_link(
     renderer.finish(input)
 }
 
-/// `None` means no links, so the binding can return the original input object.
+/// Return `None` when no link exists. The Ruby binding uses it to preserve input identity.
 pub fn link_with<E>(
     input: &[u8],
     mode: Mode,
