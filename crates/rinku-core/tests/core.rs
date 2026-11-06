@@ -264,6 +264,151 @@ fn nested_www_candidates_keep_valid_boundaries() {
 }
 
 #[test]
+fn schemes_preserve_c_case_folding_and_rejected_near_matches() {
+    for (input, accepted) in [
+        (b"HtTp://a.com".as_slice(), true),
+        (b"hTtPs://a.com", true),
+        (b"FtP://a.com", true),
+        (b"mailto://a.com", false),
+        (b"httpx://a.com", false),
+        (b"xhttp://a.com", false),
+    ] {
+        for mode in [Mode::All, Mode::Urls, Mode::Emails] {
+            let expected = if accepted && !matches!(mode, Mode::Emails) {
+                [b"<a href=\"".as_slice(), input, b"\">", input, b"</a>"].concat()
+            } else {
+                input.to_vec()
+            };
+            assert_eq!(
+                auto_link(input, mode, 0, None, DEFAULT_SKIP_TAGS)
+                    .unwrap_or_else(|| input.to_vec()),
+                expected,
+                "{input:?}, {mode:?}"
+            );
+            assert_identity_rendering(input, mode, 0);
+        }
+    }
+}
+
+#[test]
+fn trimming_immediately_around_seven_pass_limit() {
+    // These exact results are also compared with C in tools/compatibility.rb.
+    for passes in [6_usize, 7, 8] {
+        for (suffix, retained) in [
+            (
+                b")".repeat(passes),
+                if passes > 7 { b")".as_slice() } else { b"" },
+            ),
+            (
+                b"&lt;)".repeat(passes - 1),
+                if passes > 7 { b"&lt;".as_slice() } else { b"" },
+            ),
+        ] {
+            let input = [b"http://a.com".as_slice(), &suffix].concat();
+            let label = [b"http://a.com".as_slice(), retained].concat();
+            // C stops after seven changing passes, leaving bytes in the href
+            // and label even when another pass would trim them.
+            let expected = [
+                b"<a href=\"".as_slice(),
+                &label,
+                b"\">",
+                &label,
+                b"</a>",
+                &suffix[retained.len()..],
+            ]
+            .concat();
+            for mode in [Mode::All, Mode::Urls, Mode::Emails] {
+                let output = auto_link(&input, mode, 0, None, DEFAULT_SKIP_TAGS)
+                    .unwrap_or_else(|| input.clone());
+                assert_eq!(
+                    output,
+                    if matches!(mode, Mode::Emails) {
+                        &input
+                    } else {
+                        &expected
+                    }
+                    .as_slice(),
+                    "{passes} passes, {suffix:?}, {mode:?}"
+                );
+                assert_identity_rendering(&input, mode, 0);
+            }
+        }
+    }
+}
+
+#[test]
+fn competing_active_bytes_at_exact_chunk_edges() {
+    // Each entry records the token, active-byte offset within it, and C's
+    // rendered bytes in All, Urls, and Emails modes, respectively.
+    type Candidate = (&'static [u8], usize, [&'static [u8]; 3]);
+    let first_group: &[Candidate] = &[
+        (
+            b"<pre>http://hidden.com</pre>",
+            0,
+            [b"<pre>http://hidden.com</pre>"; 3],
+        ),
+        (
+            b"www.a.com",
+            0,
+            [
+                b"<a href=\"http://www.a.com\">www.a.com</a>",
+                b"<a href=\"http://www.a.com\">www.a.com</a>",
+                b"www.a.com",
+            ],
+        ),
+        // The search recognizes W, but C's www parser rejects uppercase WWW.
+        (b"WWW.a.com", 0, [b"WWW.a.com"; 3]),
+    ];
+    let second_group: &[Candidate] = &[
+        (
+            b"http://b.com",
+            4,
+            [
+                b"<a href=\"http://b.com\">http://b.com</a>",
+                b"<a href=\"http://b.com\">http://b.com</a>",
+                b"http://b.com",
+            ],
+        ),
+        (
+            b"a@b.com",
+            1,
+            [
+                b"<a href=\"mailto:a@b.com\">a@b.com</a>",
+                b"a@b.com",
+                b"<a href=\"mailto:a@b.com\">a@b.com</a>",
+            ],
+        ),
+    ];
+    for offset in [255, 256, 257] {
+        for first in first_group {
+            for second in second_group {
+                // Both orders exercise selection between the two search groups.
+                for (first, second) in [(first, second), (second, first)] {
+                    let padding = vec![b' '; offset - first.1];
+                    let input = [padding.as_slice(), first.0, b" ", second.0].concat();
+                    assert_eq!(input[offset], first.0[first.1]);
+                    for (i, mode) in [Mode::All, Mode::Urls, Mode::Emails]
+                        .into_iter()
+                        .enumerate()
+                    {
+                        let expected = [padding.as_slice(), first.2[i], b" ", second.2[i]].concat();
+                        assert_eq!(
+                            auto_link(&input, mode, 0, None, DEFAULT_SKIP_TAGS)
+                                .unwrap_or_else(|| input.clone()),
+                            expected,
+                            "offset {offset}, {:?} then {:?}, {mode:?}",
+                            first.0,
+                            second.0
+                        );
+                        assert_identity_rendering(&input, mode, 0);
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn active_search_chunk_boundaries() {
     for length in [31, 32, 255, 256, 257, 511, 512, 513] {
         let prefix = vec![b'x'; length];

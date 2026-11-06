@@ -102,6 +102,44 @@ module Compatibility
       tags[0] = 'div'
       link
     })
+    # Only in-place, same-length edits belong in the C oracle. Resizing can
+    # invalidate C's retained pointers and is covered by Rust-only Ruby tests.
+    source = +'before http://a.com after'
+    add.call('mutation/emitted_current_and_unread_bytes', [source], ->(link) {
+      source[0, 6] = 'BEFORE'
+      source.setbyte(source.index('a.com'), 'x'.ord)
+      source[-5, 5] = 'AFTER'
+      link
+    })
+    attributes = +'  rel=x'
+    calls = 0
+    add.call('mutation/attribute_whitespace_offset', [text, nil, attributes], ->(link) {
+      calls += 1
+      if calls == 1
+        attributes.setbyte(1, 'z'.ord)
+        attributes.setbyte(6, 'y'.ord)
+      end
+      link
+    })
+    attributes = +'rel=x more=y'
+    tag = +'prex'
+    calls = 0
+    add.call('mutation/introduced_nul', ['http://a.com <pre>http://b.com</pre> http://c.com', nil, attributes, [tag]], ->(link) {
+      calls += 1
+      if calls == 1
+        attributes.setbyte(5, 0)
+        tag.setbyte(3, 0)
+      end
+      link
+    })
+    result = +'one'
+    labels = %w[one two tri]
+    calls = 0
+    add.call('callback/reused_mutable_result', [text], ->(_) {
+      labels.fetch(calls).bytes.each_with_index { |byte, i| result.setbyte(i, byte) }
+      calls += 1
+      result
+    })
     cases['callback/nonlocal_throw'] = { result: catch(:done) {
       Rinku.auto_link(text) { throw :done, 'thrown' }
     } }
@@ -118,6 +156,33 @@ module Compatibility
       cases['inclusion/skip'] = observe(['<div>http://example.com</div>'], nil, receiver)
     ensure
       Rinku.skip_tags = nil
+    end
+    cases.merge(scanner_cases)
+  end
+
+  def self.scanner_cases
+    cases = {}
+    [:all, :urls, :email_addresses].each do |mode|
+      %w[HtTp://a.com hTtPs://a.com FtP://a.com mailto://a.com httpx://a.com xhttp://a.com].each do |input|
+        cases["scanner/scheme/#{mode}/#{input}"] = observe([input, mode])
+      end
+      [6, 7, 8].each do |passes|
+        [')' * passes, '&lt;)' * (passes - 1)].each_with_index do |suffix, i|
+          cases["scanner/trim/#{mode}/#{passes}/#{i}"] = observe(['http://a.com' + suffix, mode])
+        end
+      end
+      # Offsets refer to the active byte itself, not to the token or padding.
+      first_group = [['<pre>http://hidden.com</pre>', 0], ['www.a.com', 0], ['WWW.a.com', 0]]
+      second_group = [['http://b.com', 4], ['a@b.com', 1]]
+      [255, 256, 257].each do |offset|
+        first_group.product(second_group).each_with_index do |pair, i|
+          [pair, pair.reverse].each_with_index do |(first, second), order|
+            input = ' ' * (offset - first[1]) + first[0] + ' ' + second[0]
+            raise 'incorrect active offset' unless input.getbyte(offset) == first[0].getbyte(first[1])
+            cases["scanner/boundary/#{mode}/#{offset}/#{i}/#{order}"] = observe([input, mode])
+          end
+        end
+      end
     end
     cases
   end

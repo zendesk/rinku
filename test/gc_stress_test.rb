@@ -77,6 +77,94 @@ class GCStressTest < Minitest::Test
     assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <pre>http://b.com</pre> <a href="http://c.com" rel=x>http://c.com</a>', output
   end
 
+  def test_source_mutations_only_change_unread_bytes
+    source = +'before http://a.com after'
+    trace = []
+    output = stressed do
+      Rinku.auto_link(source) do |link|
+        trace << link
+        source[0, 6] = 'BEFORE'
+        source.setbyte(source.index('a.com'), 'x'.ord)
+        source[-5, 5] = 'AFTER'
+        GC.start
+        link
+      end
+    end
+    assert_equal ['http://a.com'], trace
+    assert_equal 'BEFORE http://x.com AFTER', source
+    assert_equal 'before <a href="http://a.com">http://a.com</a> AFTER', output
+  end
+
+  def test_attributes_keep_original_whitespace_offset
+    attributes = +'  rel=x'
+    calls = 0
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com', nil, attributes) do |link|
+        calls += 1
+        if calls == 1
+          attributes.setbyte(1, 'z'.ord)
+          attributes.setbyte(6, 'y'.ord)
+        end
+        GC.start
+        link
+      end
+    end
+    assert_equal 2, calls
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <a href="http://b.com" rel=y>http://b.com</a>', output
+  end
+
+  def test_attribute_offset_is_clamped_after_shrink_and_retained_after_growth
+    # Resizing is deliberately Rust-only: C retained a pointer into this string.
+    attributes = +'  rel=x'
+    trace = []
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com http://c.com', nil, attributes) do |link|
+        trace << link
+        attributes.replace(trace.length == 1 ? 'z' : 'XYrel=y')
+        GC.start
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://b.com http://c.com], trace
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <a href="http://b.com" >http://b.com</a> <a href="http://c.com" rel=y>http://c.com</a>', output
+  end
+
+  def test_mutations_introducing_nul_truncate_attributes_and_tag_names
+    attributes = +'rel=x more=y'
+    tag = +'prex'
+    trace = []
+    output = stressed do
+      Rinku.auto_link('http://a.com <pre>http://b.com</pre> http://c.com', nil, attributes, [tag]) do |link|
+        trace << link
+        if trace.length == 1
+          attributes.setbyte(5, 0)
+          tag.setbyte(3, 0)
+        end
+        GC.start
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://c.com], trace
+    assert_equal '<a href="http://a.com" rel=x more=y>http://a.com</a> <pre>http://b.com</pre> <a href="http://c.com" rel=x>http://c.com</a>', output
+  end
+
+  def test_reused_callback_result_is_copied_before_next_callback
+    result = +'one'
+    labels = %w[one two tri]
+    calls = 0
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com http://c.com') do |_link|
+        result.replace(labels.fetch(calls))
+        calls += 1
+        GC.start
+        result
+      end
+    end
+    result.replace('end')
+    assert_equal 3, calls
+    assert_equal '<a href="http://a.com">one</a> <a href="http://b.com">two</a> <a href="http://c.com">tri</a>', output
+  end
+
   def test_safe_resize_policy_and_callback_result_copy
     ['short', 'http://new.com ' * 1024].each do |replacement|
       source = +'http://a.com http://b.com'
@@ -178,6 +266,46 @@ class GCStressTest < Minitest::Test
     assert_equal :broken, stressed { Rinku.auto_link('http://a.com') { break :broken } }
     assert_equal :returned, stressed { nonlocal_return }
     assert_raises(TypeError) { stressed { Rinku.auto_link('text', nil, nil, [Object.new]) } }
+  end
+
+  def exit_after_refresh(action, value, trace)
+    source = +'http://a.com <pre>http://b.com</pre> http://c.com'
+    tag = +'pre'
+    Rinku.auto_link(source, nil, nil, [tag]) do |link|
+      trace << link
+      GC.start
+      if trace.length == 1
+        source.setbyte(source.index('b.com'), 'x'.ord)
+        tag.setbyte(0, 'x'.ord)
+        link
+      else
+        case action
+        when :raise then raise value
+        when :invalid then Object.new
+        when :throw then throw :done, value
+        when :break then break value
+        when :return then return value
+        end
+      end
+    end
+  end
+
+  def test_failure_paths_and_nonlocal_exits_after_snapshot_refresh
+    [:raise, :invalid, :throw, :break, :return].each do |action|
+      trace = []
+      value = action == :raise ? ArgumentError.new('second callback') : Object.new
+      case action
+      when :raise
+        error = assert_raises(ArgumentError) { stressed { exit_after_refresh(action, value, trace) } }
+        assert_same value, error
+      when :invalid
+        error = assert_raises(TypeError) { stressed { exit_after_refresh(action, value, trace) } }
+        assert_equal 'wrong argument type Object (expected String)', error.message
+      else
+        assert_same value, stressed { catch(:done) { exit_after_refresh(action, value, trace) } }
+      end
+      assert_equal %w[http://a.com http://x.com], trace, action.to_s
+    end
   end
 
   def test_empty_and_no_link_identity
