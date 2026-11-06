@@ -1,4 +1,3 @@
-// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 use crate::{Kind, Link};
 
 /// Create output only after the first link so callers can preserve input identity.

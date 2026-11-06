@@ -1,4 +1,3 @@
-// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 #![deny(unsafe_op_in_unsafe_fn)]
 #![deny(clippy::disallowed_methods)]
 
@@ -41,17 +40,15 @@ fn check_type(value: Value, kind: ruby_value_type) -> Result<(), Error> {
 }
 
 fn bytes(string: RString) -> Vec<u8> {
-    // Magnus copies without transcoding. Consuming the unique Bytes transfers
-    // its allocation into Vec; no reference to Ruby storage reaches our code.
     string.to_bytes().into()
 }
 
 fn ruby_string(ruby: &Ruby, bytes: &[u8], encoding: Index) -> Result<RString, Error> {
-    // This constructor allocates in Ruby. protect catches allocation errors so
-    // Rust can drop its buffers. The closure holds only references or Copy handles.
+    // This constructor allocates in Ruby.
+    // `protect` catches allocation errors so that Rust can drop its buffers.
+    // The closure holds only references or Copy handles.
     let raw = protect(|| ruby.enc_str_new(bytes, encoding).as_raw())?;
-    // SAFETY: Ruby returned a valid string under the GVL. Root it on this stack
-    // before another call.
+    // SAFETY: Ruby returned a valid string under the GVL. Root it on this stack before another call.
     Ok(RString::from_value(unsafe { Value::from_raw(raw) }).unwrap())
 }
 
@@ -108,7 +105,7 @@ struct Arguments {
 }
 
 fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Arguments, Error> {
-    // Keep C's validation order so later errors do not mask earlier errors.
+    // Keep C’s validation order so later errors do not mask earlier errors.
     ruby.check_arity(args.len(), 1..=5)?;
     let nil = ruby.qnil().as_value();
     let get = |i| args.get(i).copied().unwrap_or(nil);
@@ -127,8 +124,8 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
     let mut skip = get(3);
     if skip.is_nil() {
         let id = LazyId::get_inner_with(&SKIP_TAGS, ruby);
-        // SAFETY: The VM roots receiver, id is interned, and protect catches
-        // Ruby exceptions. Ruby returns a valid VALUE.
+        // SAFETY: The VM roots receiver, id is interned, and protect catches Ruby exceptions.
+        // Ruby returns a valid VALUE.
         let raw = protect(|| unsafe { rb_sys::rb_ivar_get(receiver.as_raw(), id.as_raw()) })?;
         // SAFETY: Ruby returned raw while the GVL was held.
         skip = unsafe { Value::from_raw(raw) };
@@ -199,8 +196,8 @@ fn without_callback(args: &Arguments) -> Option<Vec<u8>> {
 
 fn frozen_snapshot(text: RString) -> Result<RString, Error> {
     // SAFETY: The VM or stack roots text. The GVL is held.
-    // Ruby shares eligible buffers with this frozen alias. A later
-    // write must detach the buffer. Ruby copies embedded strings instead.
+    // Ruby shares eligible buffers with this frozen alias.
+    // A later write must detach the buffer. Ruby copies embedded strings instead.
     // Call rb_str_new_frozen directly so String overrides cannot change behavior.
     let raw = protect(|| unsafe { rb_sys::rb_str_new_frozen(text.as_raw()) })?;
     // SAFETY: Ruby returned a valid string. Root it on this stack before another call.
@@ -209,8 +206,8 @@ fn frozen_snapshot(text: RString) -> Result<RString, Error> {
 
 fn shares_storage(text: RString, snapshot: RString) -> bool {
     // SAFETY: Both handles are rooted on the native stack and the GVL is held.
-    // No Ruby allocation or callback occurs between these pointer reads. Only
-    // compare addresses: never dereference them, create slices, or retain them.
+    // No Ruby allocation or callback occurs between these pointer reads.
+    // Only compare addresses: never dereference them, create slices, or retain them.
     #[allow(clippy::disallowed_methods)] // Pointer identity only; no byte access.
     unsafe {
         rb_sys::RSTRING_PTR(text.as_raw()) == rb_sys::RSTRING_PTR(snapshot.as_raw())
@@ -223,9 +220,8 @@ fn refresh_source(
     input: &mut [u8],
     unread: usize,
 ) -> Result<(), Error> {
-    // Keep the last snapshot after a length change; C behavior was unsafe.
-    // Shared storage means unchanged only because the frozen alias forces
-    // Ruby to detach it before a write.
+    // Keep the last snapshot after a length change.
+    // Shared storage means unchanged only because the frozen alias forces Ruby to detach it before a write.
     if text.len() != input.len() || shares_storage(text, *snapshot) {
         return Ok(());
     }

@@ -1,4 +1,3 @@
-// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 use std::ops::Range;
 
 pub const SHORT_DOMAINS: u32 = 1;
@@ -35,7 +34,7 @@ pub struct Link {
     pub kind: Kind,
 }
 
-/// Stores offsets, not pointers, so callers can change unread bytes between scans.
+/// Stores offsets instead of pointers to allow callers to change unread bytes between scans.
 /// Keep the input length unchanged so those offsets remain valid.
 pub struct Scanner {
     end: usize,

@@ -1,4 +1,3 @@
-// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
 use crate::autolink::space;
 
 fn is_tag(data: &[u8], name: &[u8], closing: bool) -> bool {

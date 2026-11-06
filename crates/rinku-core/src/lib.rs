@@ -1,5 +1,3 @@
-// Copyright (c) 2011, Vicent Marti. ISC license; see COPYING.
-//! Byte parsing supports invalid UTF-8 without Ruby or unsafe code.
 #![forbid(unsafe_code)]
 
 mod autolink;
