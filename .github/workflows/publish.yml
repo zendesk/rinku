@@ -19,7 +19,7 @@ jobs:
     env:
       QUALIFICATION_EVIDENCE: ${{ inputs.qualification_evidence }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Require release qualification evidence
         run: ruby -ruri -e 'u = URI.parse(ENV.fetch("QUALIFICATION_EVIDENCE")); abort "HTTPS evidence URL required" unless u.scheme == "https" && u.host'
       - uses: dtolnay/rust-toolchain@stable
