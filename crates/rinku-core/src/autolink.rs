@@ -3,16 +3,7 @@ use std::ops::Range;
 pub const SHORT_DOMAINS: u32 = 1;
 const ACTIVE_SEARCH_CHUNK_BYTES: usize = 256;
 // Keep C's initial pass and limit of six additional changing passes.
-const MAX_ADDITIONAL_TRIM_PASSES: usize = 6;
-
-#[derive(Clone, Copy)]
-enum Action {
-    Inactive,
-    Www,
-    Email,
-    Url,
-    HtmlTag,
-}
+const MAX_TRIM_PASSES: usize = 7;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Mode {
@@ -39,27 +30,15 @@ pub struct Link {
 pub struct Scanner {
     end: usize,
     last_link: usize,
-    active: [Action; 256],
     mode: Mode,
     flags: u32,
 }
 
 impl Scanner {
     pub fn new(mode: Mode, flags: u32) -> Self {
-        let mut active = [Action::Inactive; 256];
-        active[b'<' as usize] = Action::HtmlTag;
-        if !matches!(mode, Mode::Urls) {
-            active[b'@' as usize] = Action::Email;
-        }
-        if !matches!(mode, Mode::Emails) {
-            active[b'w' as usize] = Action::Www;
-            active[b'W' as usize] = Action::Www;
-            active[b':' as usize] = Action::Url;
-        }
         Self {
             end: 0,
             last_link: 0,
-            active,
             mode,
             flags,
         }
@@ -72,14 +51,13 @@ impl Scanner {
                 return None;
             };
             self.end += offset;
-            let action = self.active[input[self.end] as usize];
             let at = self.end;
-            if matches!(action, Action::HtmlTag) {
-                self.end += crate::html::skip_tag(&input[at..], tags);
-                continue;
-            }
-            let parsed = match action {
-                Action::Www => match www(input, at, self.last_link) {
+            let parsed = match input[at] {
+                b'<' => {
+                    self.end += crate::html::skip_tag(&input[at..], tags);
+                    continue;
+                }
+                b'w' | b'W' => match www(input, at, self.last_link) {
                     Ok(range) => Some(Link {
                         range,
                         kind: Kind::Www,
@@ -89,15 +67,15 @@ impl Scanner {
                         continue;
                     }
                 },
-                Action::Email => email(input, at, self.last_link).map(|range| Link {
+                b'@' => email(input, at, self.last_link).map(|range| Link {
                     range,
                     kind: Kind::Email,
                 }),
-                Action::Url => url(input, at, self.last_link, self.flags).map(|range| Link {
+                b':' => url(input, at, self.last_link, self.flags).map(|range| Link {
                     range,
                     kind: Kind::Url,
                 }),
-                Action::Inactive | Action::HtmlTag => None,
+                _ => unreachable!("next_active only returns active bytes"),
             };
             if let Some(link) = parsed {
                 self.end = link.range.end;
@@ -231,16 +209,15 @@ fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
 }
 
 fn trim_link_end_bounded(data: &[u8], mut end: usize) -> usize {
-    end = trim_link_end_once(data, end);
-    let mut iterations = 0;
-    while end != 0 {
-        // C makes one extra probe after six changes, then discards its result.
+    for _ in 0..MAX_TRIM_PASSES {
+        if end == 0 {
+            break;
+        }
         let next = trim_link_end_once(data, end);
-        if next == end || iterations >= MAX_ADDITIONAL_TRIM_PASSES {
+        if next == end {
             break;
         }
         end = next;
-        iterations += 1;
     }
     end
 }
@@ -332,21 +309,12 @@ fn url(input: &[u8], at: usize, last: usize, flags: u32) -> Option<Range<usize>>
     while start > last && input[start - 1].is_ascii_alphabetic() {
         start -= 1;
     }
-    let link = &input[start..];
-    let safe = [
-        b"/".as_slice(),
-        b"http://",
-        b"https://",
-        b"ftp://",
-        b"mailto:",
-    ]
-    .iter()
-    .any(|prefix| {
-        link.len() > prefix.len()
-            && link[..prefix.len()].eq_ignore_ascii_case(prefix)
-            && link[prefix.len()].is_ascii_alphanumeric()
-    });
-    if !safe {
+    let scheme = &input[start..at];
+    if !(scheme.eq_ignore_ascii_case(b"http")
+        || scheme.eq_ignore_ascii_case(b"https")
+        || scheme.eq_ignore_ascii_case(b"ftp"))
+        || !data[3].is_ascii_alphanumeric()
+    {
         return None;
     }
     let len = scan_domain(&data[3..], flags & SHORT_DOMAINS != 0);
