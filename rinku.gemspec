@@ -3,12 +3,10 @@ require_relative "lib/version"
 Gem::Specification.new do |s|
   s.name = 'zendesk-rinku'
   s.version = Rinku::VERSION
-  s.summary = "Mostly autolinking"
+  s.summary = "Autolink URLs and email addresses"
   s.description = <<-EOF
-    A fast and very smart autolinking library that
-    acts as a drop-in replacement for Rails `auto_link`
-
-    This is now a significant departure from the base gem.
+    Autolink URLs and email addresses in Ruby strings.
+    Includes a Rails ActionView integration.
   EOF
   s.email = 'shajith@zendesk.com'
   s.homepage = 'https://github.com/zendesk/rinku'
@@ -17,18 +15,25 @@ Gem::Specification.new do |s|
   s.files = %w[
     COPYING
     README.markdown
+    docs/rust-rewrite.md
     Rakefile
-    ext/rinku/rinku.c
-    ext/rinku/rinku.h
-    ext/rinku/autolink.c
-    ext/rinku/autolink.h
-    ext/rinku/buffer.c
-    ext/rinku/buffer.h
+    Cargo.toml
+    Cargo.lock
+    crates/rinku-core/Cargo.toml
+    crates/rinku-core/src/lib.rs
+    crates/rinku-core/src/autolink.rs
+    crates/rinku-core/src/html.rs
+    crates/rinku-core/src/render.rs
+    crates/rinku-core/tests/core.rs
+    ext/rinku/Cargo.toml
+    ext/rinku/src/lib.rs
     ext/rinku/extconf.rb
     lib/rinku.rb
     lib/rails_rinku.rb
+    lib/version.rb
     rinku.gemspec
   ]
   s.extensions = ["ext/rinku/extconf.rb"]
-  s.required_ruby_version = ">= 2.7"
+  s.required_ruby_version = ">= 3.3"
+  s.add_dependency 'rb_sys', '= 0.9.130'
 end

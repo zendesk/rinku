@@ -1,4 +1,6 @@
 require 'rinku'
+require 'active_support/core_ext/array/extract_options'
+require 'active_support/core_ext/hash/reverse_merge'
 
 module RailsRinku
   def rinku_auto_link(text, *args, &block)
@@ -16,7 +18,7 @@ module RailsRinku
     Rinku.auto_link(
       text,
       options[:link],
-      tag_options(options[:html]),
+      tag_builder.tag_options(options[:html], true),
       options[:skip],
       &block
     ).html_safe

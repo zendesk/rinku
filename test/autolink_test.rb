@@ -169,12 +169,10 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     flags = Rinku::AUTOLINK_SHORT_DOMAINS
 
-    # Specifying use short_domains in the args
     url = "http://google"
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     assert_equal Rinku.auto_link(url, nil, nil, nil, flags), linked_url
 
-    # Specifying no short_domains in the args
     url = "http://google"
     linked_url = "<a href=\"#{url}\">#{url}</a>"
     assert_equal Rinku.auto_link(url, nil, nil, nil, 0), url
@@ -203,11 +201,12 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
   end
 
   def test_does_not_autolink_unicode_urls
-    url = "http://examplе.com" # <- this contains a sneaky cyrillic e lookalike
+    # The final character is Cyrillic `е` (U+0435), not Latin `e`.
+    url = "http://examplе.com"
     assert_equal url, Rinku.auto_link(url)
     assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
 
-    url = "www.examplе.com" # so does this
+    url = "www.examplе.com"
     assert_equal url, Rinku.auto_link(url)
     assert_equal url, Rinku.auto_link(url, nil, nil, nil, Rinku::AUTOLINK_SHORT_DOMAINS)
   end
@@ -315,7 +314,7 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
 
     assert_linked "&lt;<a href=\"http://www.google.com\">http://www.google.com</a>&gt;)", "&lt;http://www.google.com&gt;)"
 
-    #this produces invalid output, but limits how much work we will do
+    # C's trim limit can produce invalid HTML. Keep this output for compatibility.
     assert_linked "&lt;<a href=\"http://www.google.com&gt;\">http://www.google.com&gt;</a>)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)", "&lt;http://www.google.com&gt;)&lt;)&lt;)&lt;)&lt;)&lt;)&lt;)"
 
   end
@@ -345,6 +344,64 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
       assert_equal link.encoding.to_s, "UTF-8"
     end
 
+  end
+
+  def test_strict_types_and_validation_order
+    coercible = Object.new
+    def coercible.to_str; 'http://example.com'; end
+    error = assert_raises(TypeError) { Rinku.auto_link(coercible) }
+    assert_equal 'wrong argument type Object (expected String)', error.message
+    assert_raises(TypeError) { Rinku.auto_link('text', 'urls') }
+    assert_raises(TypeError) { Rinku.auto_link('text', :bad, 1) }
+    assert_raises(TypeError) { Rinku.auto_link('text', :bad, nil, [1]) }
+    error = assert_raises(TypeError) { Rinku.auto_link('text', :bad, nil, [], true) }
+    assert_equal 'wrong argument type true (expected Integer)', error.message
+    error = assert_raises(TypeError) { Rinku.auto_link('text', :bad) }
+    assert_equal 'Invalid linking mode (possible values are :all, :urls, :email_addresses)', error.message
+    error = assert_raises(RangeError) { Rinku.auto_link('text', nil, nil, nil, 2**32) }
+    assert_equal "integer 4294967296 too big to convert to `int'", error.message
+    assert_raises(TypeError) { Rinku.auto_link('text', nil, nil, nil, 2**70) }
+    error = assert_raises(ArgumentError) { Rinku.auto_link }
+    assert_equal 'wrong number of arguments (given 0, expected 1..5)', error.message
+    assert_raises(ArgumentError) { Rinku.auto_link('text', nil, nil, ["a\0b"]) }
+  end
+
+  def test_identity_and_string_subclasses
+    subclass = Class.new(String)
+    ['', ''.freeze, 'plain'.freeze, subclass.new('plain')].each do |input|
+      assert_same input, Rinku.auto_link(input)
+    end
+    assert_instance_of String, Rinku.auto_link(subclass.new('http://example.com'))
+  end
+
+  def test_modes_and_inclusion
+    input = 'http://example.com a@b.com'
+    assert_equal 'http://example.com <a href="mailto:a@b.com">a@b.com</a>', Rinku.auto_link(input, :email_addresses)
+    assert_equal '<a href="http://example.com">http://example.com</a> a@b.com', Rinku.auto_link(input, :urls)
+    receiver = Class.new { include Rinku }.new
+    receiver.skip_tags = ['div']
+    assert_equal '<div>http://example.com</div>', receiver.auto_link('<div>http://example.com</div>')
+  end
+
+  def test_binary_invalid_utf8_and_embedded_nul
+    ["\xff http://example.com/\xfe".b, "http://example.com/\0tail".b,
+      "http://example.com/\xff".dup.force_encoding('UTF-8')].each do |input|
+      callbacks = []
+      output = Rinku.auto_link(input) { |link| callbacks << link; link }
+      assert_equal input.encoding, output.encoding
+      assert_equal input.encoding, callbacks.first.encoding
+      link = callbacks.first.b
+      expected = input.b.sub(link, "<a href=\"#{link}\">#{link}</a>")
+      assert_equal expected, output.b
+    end
+  end
+
+  def test_callback_return_is_strict_and_byte_oriented
+    assert_raises(TypeError) { Rinku.auto_link('http://example.com') { nil } }
+    expected = "<a href=\"http://example.com\">\xff\0</a>".b
+    output = Rinku.auto_link('http://example.com') { "\xff\0".b }
+    assert_equal expected, output.b
+    assert_equal Encoding::UTF_8, output.encoding
   end
 
   def generate_result(link_text, href = nil)
