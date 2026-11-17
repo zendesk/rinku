@@ -3,6 +3,7 @@ require 'tmpdir'
 require 'rbconfig'
 require 'fileutils'
 require 'rubygems'
+require 'bundler/setup'
 
 root = File.expand_path('..', __dir__)
 require File.join(root, 'lib/version')
