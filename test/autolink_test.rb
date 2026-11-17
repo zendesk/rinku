@@ -359,7 +359,8 @@ This is just a test. <a href="http://www.pokemon.com">http://www.pokemon.com</a>
     error = assert_raises(TypeError) { Rinku.auto_link('text', :bad) }
     assert_equal 'Invalid linking mode (possible values are :all, :urls, :email_addresses)', error.message
     error = assert_raises(RangeError) { Rinku.auto_link('text', nil, nil, nil, 2**32) }
-    assert_equal "integer 4294967296 too big to convert to `int'", error.message
+    # Ruby 4.0 uses an apostrophe instead of a backtick for the opening quote.
+    assert_match(/\Ainteger 4294967296 too big to convert to [`']int'\z/, error.message)
     assert_raises(TypeError) { Rinku.auto_link('text', nil, nil, nil, 2**70) }
     error = assert_raises(ArgumentError) { Rinku.auto_link }
     assert_equal 'wrong number of arguments (given 0, expected 1..5)', error.message
