@@ -16,8 +16,10 @@ Dir.mktmpdir('rinku-package-') do |dir|
   env.merge!('GEM_HOME' => File.join(dir, 'gems'), 'GEM_PATH' => Gem.path.join(File::PATH_SEPARATOR),
     'RUBYLIB' => nil, 'RUBYOPT' => nil)
   Dir.chdir(dir) do
+    # RubyGems deletes GEM_PATH unless --install-dir is explicit. Preserve the
+    # bundle's dependency paths for the extconf.rb subprocess (notably rb_sys).
     abort 'gem installation failed' unless system(env, RbConfig.ruby, gem_command, 'install', gemfile,
-      '--no-document', '--local', '--ignore-dependencies')
+      '--install-dir', env.fetch('GEM_HOME'), '--no-document', '--local', '--ignore-dependencies')
     program = <<~'RUBY'
       require 'rinku'
       require 'version'
