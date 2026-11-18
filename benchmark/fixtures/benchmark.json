@@ -1,0 +1,57 @@
+[
+  {
+    "name": "plain_text",
+    "input": "A status update without any links; it should pass through unchanged.",
+    "expected_output": "A status update without any links; it should pass through unchanged."
+  },
+  {
+    "name": "punctuated_urls",
+    "input": "Visit http://example.com, then https://docs.example/path?q=a&lang=en#setup.",
+    "expected_output": "Visit <a href=\"http://example.com\" rel=\"noreferrer\">http://example.com</a>, then <a href=\"https://docs.example/path?q=a&lang=en#setup\" rel=\"noreferrer\">https://docs.example/path?q=a&lang=en#setup</a>."
+  },
+  {
+    "name": "short_domain_and_email",
+    "input": "For details, see www.example.com or write to support@example.com.",
+    "expected_output": "For details, see <a href=\"http://www.example.com\" rel=\"noreferrer\">www.example.com</a> or write to <a href=\"mailto:support@example.com\">support@example.com</a>."
+  },
+  {
+    "name": "existing_anchor_and_unlinked_url",
+    "input": "<p>Read <a href=\"https://existing.example/path\">the existing guide</a>, then visit https://new.example/guide.</p>",
+    "expected_output": "<p>Read <a href=\"https://existing.example/path\">the existing guide</a>, then visit <a href=\"https://new.example/guide\" rel=\"noreferrer\">https://new.example/guide</a>.</p>"
+  },
+  {
+    "name": "skip_code_and_pre",
+    "input": "<p>Run https://docs.example/install.</p><pre>curl https://api.example/v1</pre><code>https://code.example</code><script>https://script.example</script>",
+    "expected_output": "<p>Run <a href=\"https://docs.example/install\" rel=\"noreferrer\">https://docs.example/install</a>.</p><pre>curl https://api.example/v1</pre><code>https://code.example</code><script>https://script.example</script>"
+  },
+  {
+    "name": "escaped_angle_brackets",
+    "input": "&lt;https://docs.example/path&gt;",
+    "expected_output": "&lt;<a href=\"https://docs.example/path\" rel=\"noreferrer\">https://docs.example/path</a>&gt;"
+  },
+  {
+    "name": "balanced_parentheses_and_punctuation",
+    "input": "See https://example.com/path_(one), and (https://example.org/path_(two)).",
+    "expected_output": "See <a href=\"https://example.com/path_(one)\" rel=\"noreferrer\">https://example.com/path_(one)</a>, and (<a href=\"https://example.org/path_(two)\" rel=\"noreferrer\">https://example.org/path_(two)</a>)."
+  },
+  {
+    "name": "unicode_multiline_email",
+    "input": "Hello 👋,\nvisit https://example.com/help?lang=fr.\nQuestions? contact help@example.com.",
+    "expected_output": "Hello 👋,\nvisit <a href=\"https://example.com/help?lang=fr\" rel=\"noreferrer\">https://example.com/help?lang=fr</a>.\nQuestions? contact <a href=\"mailto:help@example.com\">help@example.com</a>."
+  },
+  {
+    "name": "html_email_mixed_links",
+    "input": "<div><p>Hi Sam,</p><p>To update your details, visit https://support.example.com/account?source=email&amp;campaign=welcome. For the setup guide, use www.example.com/guides/getting-started.</p><p>Need help? Contact billing@example.com or reply to this message. See <a href=\"https://status.example.com\">service status</a>.</p><p>Thanks!</p></div>",
+    "expected_output": "<div><p>Hi Sam,</p><p>To update your details, visit <a href=\"https://support.example.com/account?source=email&amp;campaign=welcome\" rel=\"noreferrer\">https://support.example.com/account?source=email&amp;campaign=welcome</a>. For the setup guide, use <a href=\"http://www.example.com/guides/getting-started\" rel=\"noreferrer\">www.example.com/guides/getting-started</a>.</p><p>Need help? Contact <a href=\"mailto:billing@example.com\">billing@example.com</a> or reply to this message. See <a href=\"https://status.example.com\">service status</a>.</p><p>Thanks!</p></div>"
+  },
+  {
+    "name": "ticket_reference_is_not_a_link",
+    "input": "Ticket #123 is not a URL; use https://support.example.com/tickets/123 if you need the web view.",
+    "expected_output": "Ticket #123 is not a URL; use <a href=\"https://support.example.com/tickets/123\" rel=\"noreferrer\">https://support.example.com/tickets/123</a> if you need the web view."
+  },
+  {
+    "name": "long_mixed_email",
+    "input": "Hello Alex,\n\nWe received your request and updated its status. You can review the details at https://support.example.com/requests/2468?from=email&amp;campaign=update. The troubleshooting article is at www.example.com/hc/articles/12345, and current service status is available at https://status.example.com/incidents/abc123.\n\nIf you have more information to add, reply to this message or contact support@example.com. Please do not send passwords or payment details by email. For account security information, visit https://example.com/security (the page includes a checklist). You can also review the privacy policy at https://example.com/legal/privacy.\n\nRegards,\nSupport Team",
+    "expected_output": "Hello Alex,\n\nWe received your request and updated its status. You can review the details at <a href=\"https://support.example.com/requests/2468?from=email&amp;campaign=update\" rel=\"noreferrer\">https://support.example.com/requests/2468?from=email&amp;campaign=update</a>. The troubleshooting article is at <a href=\"http://www.example.com/hc/articles/12345\" rel=\"noreferrer\">www.example.com/hc/articles/12345</a>, and current service status is available at <a href=\"https://status.example.com/incidents/abc123\" rel=\"noreferrer\">https://status.example.com/incidents/abc123</a>.\n\nIf you have more information to add, reply to this message or contact <a href=\"mailto:support@example.com\">support@example.com</a>. Please do not send passwords or payment details by email. For account security information, visit <a href=\"https://example.com/security\" rel=\"noreferrer\">https://example.com/security</a> (the page includes a checklist). You can also review the privacy policy at <a href=\"https://example.com/legal/privacy\" rel=\"noreferrer\">https://example.com/legal/privacy</a>.\n\nRegards,\nSupport Team"
+  }
+]

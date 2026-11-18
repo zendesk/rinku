@@ -1,71 +1,25 @@
-require 'date'
-require 'rake/clean'
-require 'rake/extensiontask'
+# frozen_string_literal: true
 require 'bundler/setup'
 require 'bundler/gem_tasks'
-require 'digest/md5'
-
-task :default => :test
-
-# ==========================================================
-# Ruby Extension
-# ==========================================================
-
-Rake::ExtensionTask.new('rinku')
-
-# ==========================================================
-# Testing
-# ==========================================================
-
+require 'rb_sys/extensiontask'
 require 'rake/testtask'
-Rake::TestTask.new('test') do |t|
-  t.test_files = FileList['test/*_test.rb']
-  t.ruby_opts += ['-r rubygems'] if defined? Gem
-end
-task 'test' => [:compile]
 
-# PACKAGING =================================================================
-
-require 'rubygems'
-$spec = Bundler::GemHelper.gemspec
-
-def package(ext='')
-  "pkg/zendesk-rinku-#{$spec.version}" + ext
+RbSys::ExtensionTask.new('rinku', Bundler::GemHelper.gemspec) do |ext|
+  ext.lib_dir = 'lib'
 end
 
-desc 'Build packages'
-task :package => package('.gem')
-
-desc 'Build and install as local gem'
-task :install => package('.gem') do
-  sh "gem install #{package('.gem')}"
+Rake::TestTask.new(:test => :compile) do |test|
+  test.libs << 'lib'
+  test.test_files = FileList['test/*_test.rb'].exclude('test/gc_stress_test.rb')
 end
 
-desc 'Update the gemspec'
-task :update_gem => file('rinku.gemspec')
-
-directory 'pkg/'
-
-file package('.gem') => %w[pkg/ rinku.gemspec] + $spec.files do |f|
-  sh "gem build rinku.gemspec"
-  mv File.basename(f.name), f.name
+Rake::TestTask.new(:gc_stress => :compile) do |test|
+  test.libs << 'lib'
+  test.test_files = ['test/gc_stress_test.rb']
 end
 
-# GEMSPEC HELPERS ==========================================================
-task :gather => 'sundown:checkout' do |t|
-  files =
-    FileList[
-      'sundown/src/{buffer,autolink}.h',
-      'sundown/src/{buffer,autolink}.c',
-    ]
-  cp files, 'ext/rinku/',
-    :preserve => true,
-    :verbose => true
-end
-
-task 'sundown:checkout' do |t|
-  unless File.exists?('sundown/src/markdown.h')
-    sh 'git submodule init'
-    sh 'git submodule update'
-  end
+desc 'Run Ruby and Rust tests'
+task :default => [:test, :core]
+task :core do
+  sh 'cargo test -p rinku-core --locked'
 end

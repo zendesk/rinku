@@ -1,0 +1,316 @@
+# frozen_string_literal: true
+require 'minitest/autorun'
+require 'rinku'
+
+class GCStressTest < Minitest::Test
+  def stressed
+    previous = GC.stress
+    GC.stress = true
+    yield
+  ensure
+    GC.stress = previous
+    Rinku.skip_tags = nil
+  end
+
+  def test_temporary_arguments_short_and_heap_strings
+    output = stressed do
+      Rinku.auto_link(('x' * 4096) + ' http://a.com <div>http://b.com</div>', :urls,
+        ['rel', '="x"'].join, [%w[d i v].join])
+    end
+    assert_equal(('x' * 4096) + ' <a href="http://a.com" rel="x">http://a.com</a> <div>http://b.com</div>', output)
+    assert_equal '<a href="http://a.co">http://a.co</a>', stressed { Rinku.auto_link(+'http://a.co') }
+  end
+
+  def test_allocations_gc_compaction_recursion_and_encoding
+    trace = []
+    output = stressed do
+      Rinku.auto_link("http://a.com/\xff www.b.com a@b.com".b) do |link|
+        16.times { 'temporary' * 32 }
+        GC.start
+        if GC.respond_to?(:verify_compaction_references)
+          GC.verify_compaction_references(double_heap: true, toward: :empty)
+        elsif GC.respond_to?(:compact)
+          GC.compact
+        end
+        trace << [link.b, link.encoding]
+        nested = Rinku.auto_link('http://nested.com') { |url| url.upcase }
+        raise 'recursive call corrupted' unless nested.include?('HTTP://NESTED.COM')
+        link.reverse
+      end
+    end
+    assert_equal ["http://a.com/\xff".b, 'www.b.com'.b, 'a@b.com'.b], trace.map(&:first)
+    assert trace.all? { |_, encoding| encoding == Encoding::BINARY }
+    assert_equal Encoding::BINARY, output.encoding
+    assert_equal "<a href=\"http://a.com/\xff\">\xff/moc.a//:ptth</a> <a href=\"http://www.b.com\">moc.b.www</a> <a href=\"mailto:a@b.com\">moc.b@a</a>".b, output
+  end
+
+  def test_mutations_and_tag_roots
+    source = +'http://a.com http://b.com <pre>http://d.com</pre>'
+    attributes = +'rel=x'
+    tag = +'pre'
+    tags = [tag]
+    output = stressed do
+      Rinku.auto_link(source, nil, attributes, tags) do |link|
+        source.setbyte(20, 'c'.ord)
+        attributes.setbyte(4, 'y'.ord)
+        tag.setbyte(0, 'x'.ord)
+        tags.clear
+        GC.start
+        link
+      end
+    end
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <a href="http://c.com" rel=y>http://c.com</a> <pre><a href="http://d.com" rel=y>http://d.com</a></pre>', output
+  end
+
+  def test_original_tag_objects_survive_removal_from_caller_array
+    tags = [%w[p r e].join]
+    output = stressed do
+      Rinku.auto_link(+'http://a.com <pre>http://b.com</pre> http://c.com', nil,
+        ['rel', '=x'].join, tags) do |link|
+        tags.clear
+        Rinku.skip_tags = [%w[d i v].join]
+        GC.start
+        GC.compact if GC.respond_to?(:compact)
+        link
+      end
+    end
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <pre>http://b.com</pre> <a href="http://c.com" rel=x>http://c.com</a>', output
+  end
+
+  def test_source_mutations_only_change_unread_bytes
+    source = +'before http://a.com after'
+    trace = []
+    output = stressed do
+      Rinku.auto_link(source) do |link|
+        trace << link
+        source[0, 6] = 'BEFORE'
+        source.setbyte(source.index('a.com'), 'x'.ord)
+        source[-5, 5] = 'AFTER'
+        GC.start
+        link
+      end
+    end
+    assert_equal ['http://a.com'], trace
+    assert_equal 'BEFORE http://x.com AFTER', source
+    assert_equal 'before <a href="http://a.com">http://a.com</a> AFTER', output
+  end
+
+  def test_attributes_keep_original_whitespace_offset
+    attributes = +'  rel=x'
+    calls = 0
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com', nil, attributes) do |link|
+        calls += 1
+        if calls == 1
+          attributes.setbyte(1, 'z'.ord)
+          attributes.setbyte(6, 'y'.ord)
+        end
+        GC.start
+        link
+      end
+    end
+    assert_equal 2, calls
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <a href="http://b.com" rel=y>http://b.com</a>', output
+  end
+
+  def test_attribute_offset_is_clamped_after_shrink_and_retained_after_growth
+    # Test resizing with Rust only. C retains a pointer into this string.
+    attributes = +'  rel=x'
+    trace = []
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com http://c.com', nil, attributes) do |link|
+        trace << link
+        attributes.replace(trace.length == 1 ? 'z' : 'XYrel=y')
+        GC.start
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://b.com http://c.com], trace
+    assert_equal '<a href="http://a.com" rel=x>http://a.com</a> <a href="http://b.com" >http://b.com</a> <a href="http://c.com" rel=y>http://c.com</a>', output
+  end
+
+  def test_mutations_introducing_nul_truncate_attributes_and_tag_names
+    attributes = +'rel=x more=y'
+    tag = +'prex'
+    trace = []
+    output = stressed do
+      Rinku.auto_link('http://a.com <pre>http://b.com</pre> http://c.com', nil, attributes, [tag]) do |link|
+        trace << link
+        if trace.length == 1
+          attributes.setbyte(5, 0)
+          tag.setbyte(3, 0)
+        end
+        GC.start
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://c.com], trace
+    assert_equal '<a href="http://a.com" rel=x more=y>http://a.com</a> <pre>http://b.com</pre> <a href="http://c.com" rel=x>http://c.com</a>', output
+  end
+
+  def test_reused_callback_result_is_copied_before_next_callback
+    result = +'one'
+    labels = %w[one two tri]
+    calls = 0
+    output = stressed do
+      Rinku.auto_link('http://a.com http://b.com http://c.com') do |_link|
+        result.replace(labels.fetch(calls))
+        calls += 1
+        GC.start
+        result
+      end
+    end
+    result.replace('end')
+    assert_equal 3, calls
+    assert_equal '<a href="http://a.com">one</a> <a href="http://b.com">two</a> <a href="http://c.com">tri</a>', output
+  end
+
+  def test_safe_resize_policy_and_callback_result_copy
+    ['short', 'http://new.com ' * 1024].each do |replacement|
+      source = +'http://a.com http://b.com'
+      result = +"\xff\0"
+      output = stressed do
+        Rinku.auto_link(source) do |_link|
+          source.replace(replacement)
+          GC.start
+          result
+        end
+      end
+      assert_equal "<a href=\"http://a.com\">\xff\0</a> <a href=\"http://b.com\">\xff\0</a>".b, output.b
+      assert_equal Encoding::UTF_8, output.encoding
+    end
+  end
+
+  def nonlocal_return
+    Rinku.auto_link('http://a.com') { return :returned }
+    :unreachable
+  end
+
+  def test_source_snapshots_track_embedded_shared_and_replaced_strings
+    ['a@b.co d@e.co', 'http://a.com http://b.com ' * 8].each do |original|
+      [:setbyte, :replace].each do |mutation|
+        source = original.dup
+        shared_copy = source.dup
+        second = original.index(' ') + 1
+        changed = original.dup
+        changed.setbyte(second, 'x'.ord)
+        trace = []
+        output = stressed do
+          Rinku.auto_link(source) do |link|
+            trace << link
+            if trace.length == 1
+              if mutation == :setbyte
+                source.setbyte(second, 'x'.ord)
+              else
+                source.replace(changed.dup)
+              end
+            end
+            GC.start
+            GC.compact if GC.respond_to?(:compact)
+            link
+          end
+        end
+        assert_equal Rinku.auto_link(changed), output
+        assert_equal original, shared_copy
+        assert_equal changed, source
+      end
+    end
+  end
+
+  def test_resize_fallback_keeps_latest_snapshot_and_resumes_at_original_length
+    source = +'http://a.com http://b.com http://c.com http://d.com'
+    trace = []
+    output = stressed do
+      Rinku.auto_link(source) do |link|
+        trace << link
+        case trace.length
+        when 1 then source.sub!('b.com', 'x.com')
+        when 2 then source.replace('short')
+        when 3 then source.replace('http://a.com http://x.com http://c.com http://y.com')
+        end
+        GC.start
+        GC.compact if GC.respond_to?(:compact)
+        link
+      end
+    end
+    assert_equal %w[http://a.com http://x.com http://c.com http://y.com], trace
+    assert_equal trace.map { |link| %(<a href="#{link}">#{link}</a>) }.join(' '), output
+  end
+
+  def test_source_can_be_frozen_during_callback
+    source = +'http://a.com http://b.com'
+    output = stressed { Rinku.auto_link(source) { |link| source.freeze; GC.start; link } }
+    assert_equal '<a href="http://a.com">http://a.com</a> <a href="http://b.com">http://b.com</a>', output
+  end
+
+  def test_encoding_mutation_uses_initial_callback_and_current_output_encoding
+    input = +'http://a.com http://b.com'
+    encodings = []
+    output = stressed do
+      Rinku.auto_link(input) do |link|
+        encodings << link.encoding
+        input.force_encoding(Encoding::BINARY)
+        GC.start
+        link
+      end
+    end
+    assert_equal [Encoding::UTF_8, Encoding::UTF_8], encodings
+    assert_equal Encoding::BINARY, output.encoding
+    assert_equal '<a href="http://a.com">http://a.com</a> <a href="http://b.com">http://b.com</a>'.b, output
+  end
+
+  def test_failure_paths_and_nonlocal_exits
+    assert_raises(ArgumentError) { stressed { Rinku.auto_link('http://a.com') { GC.start; raise ArgumentError, 'callback' } } }
+    assert_raises(TypeError) { stressed { Rinku.auto_link('http://a.com') { GC.start; Object.new } } }
+    assert_equal :thrown, stressed { catch(:done) { Rinku.auto_link('http://a.com') { throw :done, :thrown } } }
+    assert_equal :broken, stressed { Rinku.auto_link('http://a.com') { break :broken } }
+    assert_equal :returned, stressed { nonlocal_return }
+    assert_raises(TypeError) { stressed { Rinku.auto_link('text', nil, nil, [Object.new]) } }
+  end
+
+  def exit_after_refresh(action, value, trace)
+    source = +'http://a.com <pre>http://b.com</pre> http://c.com'
+    tag = +'pre'
+    Rinku.auto_link(source, nil, nil, [tag]) do |link|
+      trace << link
+      GC.start
+      if trace.length == 1
+        source.setbyte(source.index('b.com'), 'x'.ord)
+        tag.setbyte(0, 'x'.ord)
+        link
+      else
+        case action
+        when :raise then raise value
+        when :invalid then Object.new
+        when :throw then throw :done, value
+        when :break then break value
+        when :return then return value
+        end
+      end
+    end
+  end
+
+  def test_failure_paths_and_nonlocal_exits_after_snapshot_refresh
+    [:raise, :invalid, :throw, :break, :return].each do |action|
+      trace = []
+      value = action == :raise ? ArgumentError.new('second callback') : Object.new
+      case action
+      when :raise
+        error = assert_raises(ArgumentError) { stressed { exit_after_refresh(action, value, trace) } }
+        assert_same value, error
+      when :invalid
+        error = assert_raises(TypeError) { stressed { exit_after_refresh(action, value, trace) } }
+        assert_equal 'wrong argument type Object (expected String)', error.message
+      else
+        assert_same value, stressed { catch(:done) { exit_after_refresh(action, value, trace) } }
+      end
+      assert_equal %w[http://a.com http://x.com], trace, action.to_s
+    end
+  end
+
+  def test_empty_and_no_link_identity
+    inputs = ['', ''.freeze, 'no links'.freeze, 'plain'.b]
+    outputs = stressed { inputs.map { |input| 3.times.map { Rinku.auto_link(input) } } }
+    outputs.each_with_index { |values, i| values.each { |value| assert_same inputs[i], value } }
+  end
+end

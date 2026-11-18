@@ -1,0 +1,378 @@
+#![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::disallowed_methods)]
+
+use magnus::{
+    Error, RArray, RString, Ruby, Symbol, Value,
+    encoding::{EncodingCapable, Index},
+    method,
+    prelude::*,
+    rb_sys::{AsRawId, AsRawValue, FromRawValue, protect},
+    value::{Fixnum, Id, LazyId},
+};
+use rb_sys::ruby_value_type;
+use rinku_core::{DEFAULT_SKIP_TAGS, Link, Mode, Renderer, Scanner};
+
+// These IDs are interned Ruby symbols, not unmarked heap values.
+static SKIP_TAGS: LazyId = LazyId::new("@skip_tags");
+static ALL: LazyId = LazyId::new("all");
+static URLS: LazyId = LazyId::new("urls");
+static EMAILS: LazyId = LazyId::new("email_addresses");
+static CALL: LazyId = LazyId::new("call");
+
+fn check_type(value: Value, kind: ruby_value_type) -> Result<(), Error> {
+    let valid = match kind {
+        ruby_value_type::RUBY_T_STRING => RString::from_value(value).is_some(),
+        ruby_value_type::RUBY_T_ARRAY => RArray::from_value(value).is_some(),
+        ruby_value_type::RUBY_T_SYMBOL => Symbol::from_value(value).is_some(),
+        ruby_value_type::RUBY_T_FIXNUM => Fixnum::from_value(value).is_some(),
+        _ => false,
+    };
+    if valid {
+        return Ok(());
+    }
+    // SAFETY: Ruby or Magnus roots `value`. The GVL is held.
+    // `rb_check_type` can raise. `protect` catches it before Ruby can skip Rust destructors.
+    protect(|| unsafe {
+        rb_sys::rb_check_type(value.as_raw(), kind as i32);
+        0
+    })?;
+    Ok(())
+}
+
+fn checked_string(value: Value) -> Result<RString, Error> {
+    check_type(value, ruby_value_type::RUBY_T_STRING)?;
+    Ok(RString::from_value(value).expect("checked Ruby string type"))
+}
+
+fn bytes(string: RString) -> Vec<u8> {
+    string.to_bytes().into()
+}
+
+fn ruby_string(ruby: &Ruby, bytes: &[u8], encoding: Index) -> Result<RString, Error> {
+    // `enc_str_new` can allocate in Ruby.
+    // Use `protect` so an error does not skip Rust destructors.
+    // The closure captures references and `Copy` handles only.
+    let raw = protect(|| ruby.enc_str_new(bytes, encoding).as_raw())?;
+    // SAFETY: Ruby returned a valid string under the GVL.
+    // Root it on this stack before another Ruby call.
+    Ok(RString::from_value(unsafe { Value::from_raw(raw) }).unwrap())
+}
+
+fn call_link(
+    ruby: &Ruby,
+    block: magnus::block::Proc,
+    link_text: &[u8],
+    encoding: Index,
+) -> Result<Vec<u8>, Error> {
+    let call = LazyId::get_inner_with(&CALL, ruby);
+    // Build the argument and call the Proc in one protected frame.
+    // Two Magnus calls would need two frames per link.
+    // Captures are references or `Copy` handles. `link_text` points to Rust-owned memory.
+    let raw = protect(|| {
+        let argument = ruby.enc_str_new(link_text, encoding);
+        let arguments = [argument.as_raw()];
+        // SAFETY: The GVL is held. Ruby roots `block` and `arguments` during the call and GC.
+        // The closure has no Rust values with destructors. `protect` catches allocation errors,
+        // exceptions, and nonlocal exits.
+        unsafe { rb_sys::rb_funcallv(block.as_raw(), call.as_raw(), 1, arguments.as_ptr()) }
+    })?;
+    // SAFETY: Ruby returned a valid value. Root it on this stack before another call.
+    let result = unsafe { Value::from_raw(raw) };
+    Ok(bytes(checked_string(result)?))
+}
+
+fn tag_bytes(tags: RArray) -> Result<Vec<Vec<u8>>, Error> {
+    let mut result = Vec::with_capacity(tags.len());
+    for i in 0..tags.len() {
+        let tag = checked_string(tags.entry(i as isize)?)?;
+        // Use `StringValueCStr` to match C's encoding and NUL checks. Do not coerce the value.
+        // SAFETY: The Ruby array and this stack root `tag`. The closure has no Rust values
+        // that a Ruby longjmp could skip.
+        let mut raw = tag.as_raw();
+        #[allow(clippy::disallowed_methods)] // Validation only; discard the returned pointer.
+        protect(|| unsafe {
+            rb_sys::rb_string_value_cstr(&mut raw);
+            0
+        })?;
+        result.push(bytes(tag));
+    }
+    Ok(result)
+}
+
+// The types below hold Ruby handles. Keep them on the native stack, where GC can see them.
+// Never move them into Rust heap allocations.
+
+enum SkipTags {
+    Default,
+    // The private Ruby array keeps the original tag strings visible to GC after callbacks.
+    Custom {
+        tags: RArray,
+        snapshot: Vec<Vec<u8>>,
+    },
+}
+
+impl SkipTags {
+    fn custom(tags: RArray) -> Result<Self, Error> {
+        let snapshot = tag_bytes(tags)?;
+        Ok(Self::Custom { tags, snapshot })
+    }
+
+    fn next(&self, scanner: &mut Scanner, input: &[u8]) -> Option<Link> {
+        match self {
+            Self::Default => scanner.next(input, DEFAULT_SKIP_TAGS),
+            Self::Custom { snapshot, .. } => scanner.next(input, snapshot),
+        }
+    }
+
+    fn auto_link(
+        &self,
+        input: &[u8],
+        mode: Mode,
+        flags: u32,
+        attrs: Option<&[u8]>,
+    ) -> Option<Vec<u8>> {
+        match self {
+            Self::Default => rinku_core::auto_link(input, mode, flags, attrs, DEFAULT_SKIP_TAGS),
+            Self::Custom { snapshot, .. } => {
+                rinku_core::auto_link(input, mode, flags, attrs, snapshot)
+            }
+        }
+    }
+
+    fn refresh(&mut self) -> Result<(), Error> {
+        if let Self::Custom { tags, snapshot } = self {
+            // Unlike initial validation, accept added NULs. They terminate the tag, as in C.
+            for (i, tag) in snapshot.iter_mut().enumerate() {
+                *tag = bytes(tags.entry::<RString>(i as isize)?);
+            }
+        }
+        Ok(())
+    }
+}
+
+struct Attributes {
+    string: RString,
+    bytes: Vec<u8>,
+    // Keep the original whitespace offset after callbacks, as C does.
+    start: usize,
+}
+
+impl Attributes {
+    fn new(string: RString) -> Self {
+        let bytes = bytes(string);
+        let start = trim_start(&bytes);
+        Self {
+            string,
+            bytes,
+            start,
+        }
+    }
+
+    fn current(&self) -> &[u8] {
+        &self.bytes[self.start.min(self.bytes.len())..]
+    }
+
+    fn refresh(&mut self) {
+        self.bytes = bytes(self.string);
+    }
+}
+
+struct Source {
+    text: RString,
+    // For mutable sources, a frozen alias detects writes without borrowing Ruby storage.
+    // A frozen source needs only its owned byte snapshot.
+    alias: Option<RString>,
+    bytes: Vec<u8>,
+}
+
+impl Source {
+    fn new(text: RString) -> Result<Self, Error> {
+        let alias = if text.is_frozen() {
+            None
+        } else {
+            Some(frozen_snapshot(text)?)
+        };
+        Ok(Self {
+            text,
+            alias,
+            bytes: bytes(text),
+        })
+    }
+
+    fn refresh_unread(&mut self, unread: usize) -> Result<(), Error> {
+        let Some(alias) = &mut self.alias else {
+            return Ok(());
+        };
+        // Keep the old snapshot when the source length changes. Scanner offsets use it.
+        // Shared storage means the bytes are unchanged: Ruby must detach before a write.
+        if self.text.len() != self.bytes.len() || shares_storage(self.text, *alias) {
+            return Ok(());
+        }
+        let current = bytes(self.text);
+        // Refresh unread bytes only. The renderer already owns the emitted prefix.
+        self.bytes[unread..].copy_from_slice(&current[unread..]);
+        *alias = frozen_snapshot(self.text)?;
+        Ok(())
+    }
+}
+
+struct Arguments {
+    text: RString,
+    attrs: Option<RString>,
+    tags: SkipTags,
+    mode: Mode,
+    flags: u32,
+}
+
+fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Arguments, Error> {
+    // Match C's validation order. A later argument error must not replace an earlier one.
+    ruby.check_arity(args.len(), 1..=5)?;
+    let nil = ruby.qnil().as_value();
+    let get = |i| args.get(i).copied().unwrap_or(nil);
+    let text = checked_string(get(0))?;
+    let mode = get(1);
+    if !mode.is_nil() {
+        check_type(mode, ruby_value_type::RUBY_T_SYMBOL)?;
+    }
+    let attrs = get(2);
+    let attrs = if attrs.is_nil() {
+        None
+    } else {
+        Some(checked_string(attrs)?)
+    };
+    let mut skip = get(3);
+    if skip.is_nil() {
+        let id = LazyId::get_inner_with(&SKIP_TAGS, ruby);
+        // SAFETY: The VM roots `receiver`, `id` is interned, and `protect` catches Ruby exceptions.
+        // Ruby returns a valid `VALUE`.
+        let raw = protect(|| unsafe { rb_sys::rb_ivar_get(receiver.as_raw(), id.as_raw()) })?;
+        // SAFETY: Ruby returned this `VALUE` while the GVL was held.
+        skip = unsafe { Value::from_raw(raw) };
+    }
+    // Keep a Ruby array, not `Vec<Value>`, so GC marks original tags after callbacks.
+    let tags = if skip.is_nil() {
+        SkipTags::Default
+    } else {
+        check_type(skip, ruby_value_type::RUBY_T_ARRAY)?;
+        let array = RArray::from_value(skip).unwrap();
+        // `dup` allocates in Ruby. Catch its exceptions before Rust unwinds.
+        let raw = protect(|| array.dup().as_raw())?;
+        // SAFETY: Ruby returned an array. Root it on this stack before another call.
+        SkipTags::custom(RArray::from_value(unsafe { Value::from_raw(raw) }).unwrap())?
+    };
+    let flags = get(4);
+    let flags = if flags.is_nil() {
+        0
+    } else {
+        check_type(flags, ruby_value_type::RUBY_T_FIXNUM)?;
+        // SAFETY: The type check passed. Protected `FIX2INT` preserves C's range errors.
+        // Magnus's integer conversion does not.
+        protect(|| unsafe { rb_sys::rb_fix2int(flags.as_raw()) as rb_sys::VALUE })? as u32
+    };
+    let mode_id = Symbol::from_value(mode).map(Id::from);
+    let mode = if mode.is_nil() || mode_id.is_some_and(|id| id == *ALL) {
+        Mode::All
+    } else if mode_id.is_some_and(|id| id == *URLS) {
+        Mode::Urls
+    } else if mode_id.is_some_and(|id| id == *EMAILS) {
+        Mode::Emails
+    } else {
+        return Err(Error::new(
+            ruby.exception_type_error(),
+            "Invalid linking mode (possible values are :all, :urls, :email_addresses)",
+        ));
+    };
+    Ok(Arguments {
+        text,
+        attrs,
+        tags,
+        mode,
+        flags,
+    })
+}
+
+fn without_callback(args: &Arguments) -> Option<Vec<u8>> {
+    let input = bytes(args.text);
+    let attributes = args.attrs.map(Attributes::new);
+    let attributes = attributes.as_ref().map(Attributes::current);
+    args.tags
+        .auto_link(&input, args.mode, args.flags, attributes)
+}
+
+fn frozen_snapshot(text: RString) -> Result<RString, Error> {
+    // SAFETY: The VM or this stack roots `text`. The GVL is held.
+    // Ruby can share the buffer with a frozen alias. A later write must detach it.
+    // Ruby copies embedded strings instead of sharing their buffers.
+    // Call `rb_str_new_frozen` directly to avoid overridden String methods.
+    let raw = protect(|| unsafe { rb_sys::rb_str_new_frozen(text.as_raw()) })?;
+    // SAFETY: Ruby returned a valid string. Root it on this stack before another call.
+    Ok(RString::from_value(unsafe { Value::from_raw(raw) }).unwrap())
+}
+
+fn shares_storage(text: RString, snapshot: RString) -> bool {
+    // SAFETY: Both handles are rooted on the native stack. The GVL is held.
+    // No Ruby allocation or callback occurs between the pointer reads.
+    // Compare addresses only. Do not dereference, slice, or retain the pointers.
+    #[allow(clippy::disallowed_methods)] // Compare identity only; do not read string bytes.
+    unsafe {
+        rb_sys::RSTRING_PTR(text.as_raw()) == rb_sys::RSTRING_PTR(snapshot.as_raw())
+    }
+}
+
+fn with_callback(
+    ruby: &Ruby,
+    args: &mut Arguments,
+    block: magnus::block::Proc,
+) -> Result<Option<Vec<u8>>, Error> {
+    let encoding = args.text.enc_get();
+    let mut attributes = args.attrs.map(Attributes::new);
+    let mut source = Source::new(args.text)?;
+    let mut scanner = Scanner::new(args.mode, args.flags);
+    let mut renderer = Renderer::default();
+    while let Some(link) = args.tags.next(&mut scanner, &source.bytes) {
+        let label = call_link(ruby, block, &source.bytes[link.range.clone()], encoding)?;
+        // Render with the snapshots the callback received. Its edits affect only later links.
+        let attrs = attributes.as_ref().map(Attributes::current);
+        renderer.link(&source.bytes, &link, attrs, &label);
+        source.refresh_unread(link.range.end)?;
+        if let Some(attributes) = &mut attributes {
+            attributes.refresh();
+        }
+        args.tags.refresh()?;
+    }
+    Ok(renderer.finish(&source.bytes))
+}
+
+fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Error> {
+    let mut args = validate_arguments(ruby, receiver, args)?;
+    let output = if ruby.block_given() {
+        with_callback(ruby, &mut args, ruby.block_proc()?)?
+    } else {
+        without_callback(&args)
+    };
+    match output {
+        None => Ok(args.text.as_value()),
+        // Match C: output uses the source's current encoding.
+        // Callback arguments use the encoding captured before scanning.
+        Some(output) => Ok(ruby_string(ruby, &output, args.text.enc_get())?.as_value()),
+    }
+}
+
+fn trim_start(a: &[u8]) -> usize {
+    a.iter()
+        .take_while(|&&c| matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c))
+        .count()
+}
+
+#[magnus::init]
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    for id in [&SKIP_TAGS, &ALL, &URLS, &EMAILS, &CALL] {
+        LazyId::force(id, ruby);
+    }
+    let module = ruby.define_module("Rinku")?;
+    // Magnus catches Rust panics at the ABI boundary.
+    // `Result` returns Ruby exceptions and nonlocal exits after Rust drops owned buffers.
+    module.define_method("auto_link", method!(auto_link, -1))?;
+    module.const_set("AUTOLINK_SHORT_DOMAINS", rinku_core::SHORT_DOMAINS)?;
+    Ok(())
+}
