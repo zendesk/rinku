@@ -1,22 +1,21 @@
-use rinku_core::{DEFAULT_SKIP_TAGS, Mode, SHORT_DOMAINS, Scanner, auto_link, link_with};
+use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Renderer, SHORT_DOMAINS, Scanner, auto_link};
 
 fn link(input: &[u8]) -> Vec<u8> {
     auto_link(input, Mode::All, 0, None, DEFAULT_SKIP_TAGS).unwrap_or_else(|| input.to_vec())
 }
 
-fn assert_identity_rendering(input: &[u8], mode: Mode, flags: u32) {
+fn assert_renders_only_scanned_links(input: &[u8], mode: Mode, flags: u32) {
+    let scanned = Scanner::new(mode, flags)
+        .next(input, DEFAULT_SKIP_TAGS)
+        .is_some();
     for attributes in [None, Some(b"rel=x".as_slice())] {
-        let ordinary = auto_link(input, mode, flags, attributes, DEFAULT_SKIP_TAGS);
-        let callback = link_with(input, mode, flags, attributes, DEFAULT_SKIP_TAGS, |text| {
-            Ok::<_, std::convert::Infallible>(text.to_vec())
-        })
-        .unwrap();
-        assert_eq!(callback, ordinary);
+        let rendered = auto_link(input, mode, flags, attributes, DEFAULT_SKIP_TAGS);
+        assert_eq!(rendered.is_some(), scanned);
     }
 }
 
 #[test]
-fn rendering_and_callback_errors() {
+fn rendering() {
     assert_eq!(
         link(b"www.a.com a@b.com"),
         b"<a href=\"http://www.a.com\">www.a.com</a> <a href=\"mailto:a@b.com\">a@b.com</a>"
@@ -30,29 +29,25 @@ fn rendering_and_callback_errors() {
         auto_link(b"ordinary", Mode::All, 0, None, DEFAULT_SKIP_TAGS),
         None
     );
-    let result = link_with(
-        b"http://a.com",
-        Mode::All,
-        0,
-        None,
-        DEFAULT_SKIP_TAGS,
-        |_| Err::<Vec<u8>, _>("failed"),
+}
+
+#[test]
+fn renderer_with_custom_labels_and_changed_input() {
+    let mut input = b"http://a.com www.b.com tail".to_vec();
+    let mut scanner = Scanner::new(Mode::All, 0);
+    let mut renderer = Renderer::default();
+    let first = scanner.next(&input, DEFAULT_SKIP_TAGS).unwrap();
+    // Labels are inserted unescaped. Attributes stop at the first NUL.
+    renderer.link(&input, &first, Some(b"x=\"1\"\0y"), b"<b>\"A\"</b>");
+    // Change unread bytes between links, as the Ruby callback path does.
+    input[13..17].copy_from_slice(b"WWW.");
+    assert!(scanner.next(&input, DEFAULT_SKIP_TAGS).is_none());
+    // A shorter final snapshot truncates the suffix.
+    input.truncate(16);
+    assert_eq!(
+        renderer.finish(&input).unwrap(),
+        b"<a href=\"http://a.com\" x=\"1\"><b>\"A\"</b></a> WWW"
     );
-    assert_eq!(result, Err("failed"));
-    let mut calls = 0;
-    let result = link_with(
-        b"http://a.com www.b.com a@b.com",
-        Mode::All,
-        0,
-        Some(b"x"),
-        DEFAULT_SKIP_TAGS,
-        |s| {
-            calls += 1;
-            if calls == 2 { Err(2) } else { Ok(s.to_vec()) }
-        },
-    );
-    assert_eq!(result, Err(2));
-    assert_eq!(calls, 2);
 }
 
 #[test]
@@ -125,14 +120,14 @@ fn truncated_sequences_and_every_byte() {
         let text = [b"http://a.com/".as_slice(), &[byte], b" a@b.com www.a.com"].concat();
         for mode in [Mode::All, Mode::Urls, Mode::Emails] {
             for flags in [0, SHORT_DOMAINS] {
-                assert_identity_rendering(&text, mode, flags);
+                assert_renders_only_scanned_links(&text, mode, flags);
             }
         }
     }
 }
 
 #[test]
-fn bounded_arbitrary_bytes_have_equivalent_rendering_and_valid_ranges() {
+fn bounded_arbitrary_bytes_render_scanned_links_with_valid_ranges() {
     // Use bounded inputs and a fixed seed so Miri runs are reproducible.
     let mut random = 0x1234_5678_u64;
     let count = if cfg!(miri) { 64 } else { 4096 };
@@ -149,7 +144,7 @@ fn bounded_arbitrary_bytes_have_equivalent_rendering_and_valid_ranges() {
         }
         for mode in [Mode::All, Mode::Urls, Mode::Emails] {
             for flags in [0, SHORT_DOMAINS] {
-                assert_identity_rendering(&text, mode, flags);
+                assert_renders_only_scanned_links(&text, mode, flags);
             }
             let mut scanner = Scanner::new(mode, iteration as u32);
             let mut end = 0;
@@ -206,7 +201,7 @@ fn adjacent_urls_and_html_preserve_trimming_and_skipped_tags() {
         ),
     ] {
         assert_eq!(link(input), expected);
-        assert_identity_rendering(input, Mode::All, 0);
+        assert_renders_only_scanned_links(input, Mode::All, 0);
     }
 }
 
@@ -254,7 +249,7 @@ fn nested_www_candidates_keep_valid_boundaries() {
     ] {
         assert_eq!(link(input), expected);
         for mode in [Mode::All, Mode::Urls, Mode::Emails] {
-            assert_identity_rendering(input, mode, 0);
+            assert_renders_only_scanned_links(input, mode, 0);
         }
     }
 }
@@ -281,7 +276,7 @@ fn schemes_preserve_c_case_folding_and_rejected_near_matches() {
                 expected,
                 "{input:?}, {mode:?}"
             );
-            assert_identity_rendering(input, mode, 0);
+            assert_renders_only_scanned_links(input, mode, 0);
         }
     }
 }
@@ -325,7 +320,7 @@ fn trimming_immediately_around_seven_pass_limit() {
                     .as_slice(),
                     "{passes} passes, {suffix:?}, {mode:?}"
                 );
-                assert_identity_rendering(&input, mode, 0);
+                assert_renders_only_scanned_links(&input, mode, 0);
             }
         }
     }
@@ -394,7 +389,7 @@ fn competing_active_bytes_at_exact_chunk_edges() {
                             first.0,
                             second.0
                         );
-                        assert_identity_rendering(&input, mode, 0);
+                        assert_renders_only_scanned_links(&input, mode, 0);
                     }
                 }
             }

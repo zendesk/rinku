@@ -4,6 +4,7 @@ version = "2.0.0-pre.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+publish = false
 
 [dependencies]
 memchr = "=2.8.3"

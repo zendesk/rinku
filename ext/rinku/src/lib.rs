@@ -10,7 +10,7 @@ use magnus::{
     value::{Fixnum, Id, LazyId},
 };
 use rb_sys::ruby_value_type;
-use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Renderer, Scanner};
+use rinku_core::{DEFAULT_SKIP_TAGS, Link, Mode, Renderer, Scanner};
 
 // These IDs are interned Ruby symbols, not unmarked heap values.
 static SKIP_TAGS: LazyId = LazyId::new("@skip_tags");
@@ -99,13 +99,127 @@ fn tag_bytes(tags: RArray) -> Result<Vec<Vec<u8>>, Error> {
     Ok(result)
 }
 
-// Keep Ruby handles on the native stack.
-// The Ruby array keeps the original tag strings visible to GC.
+// The types below hold Ruby handles. Keep them on the native stack, where GC can see them.
+// Never move them into Rust heap allocations.
+
+enum SkipTags {
+    Default,
+    // The private Ruby array keeps the original tag strings visible to GC after callbacks.
+    Custom {
+        tags: RArray,
+        snapshot: Vec<Vec<u8>>,
+    },
+}
+
+impl SkipTags {
+    fn custom(tags: RArray) -> Result<Self, Error> {
+        let snapshot = tag_bytes(tags)?;
+        Ok(Self::Custom { tags, snapshot })
+    }
+
+    fn next(&self, scanner: &mut Scanner, input: &[u8]) -> Option<Link> {
+        match self {
+            Self::Default => scanner.next(input, DEFAULT_SKIP_TAGS),
+            Self::Custom { snapshot, .. } => scanner.next(input, snapshot),
+        }
+    }
+
+    fn auto_link(
+        &self,
+        input: &[u8],
+        mode: Mode,
+        flags: u32,
+        attrs: Option<&[u8]>,
+    ) -> Option<Vec<u8>> {
+        match self {
+            Self::Default => rinku_core::auto_link(input, mode, flags, attrs, DEFAULT_SKIP_TAGS),
+            Self::Custom { snapshot, .. } => {
+                rinku_core::auto_link(input, mode, flags, attrs, snapshot)
+            }
+        }
+    }
+
+    fn refresh(&mut self) -> Result<(), Error> {
+        if let Self::Custom { tags, snapshot } = self {
+            // Unlike initial validation, accept added NULs. They terminate the tag, as in C.
+            for (i, tag) in snapshot.iter_mut().enumerate() {
+                *tag = bytes(tags.entry::<RString>(i as isize)?);
+            }
+        }
+        Ok(())
+    }
+}
+
+struct Attributes {
+    string: RString,
+    bytes: Vec<u8>,
+    // Keep the original whitespace offset after callbacks, as C does.
+    start: usize,
+}
+
+impl Attributes {
+    fn new(string: RString) -> Self {
+        let bytes = bytes(string);
+        let start = trim_start(&bytes);
+        Self {
+            string,
+            bytes,
+            start,
+        }
+    }
+
+    fn current(&self) -> &[u8] {
+        &self.bytes[self.start.min(self.bytes.len())..]
+    }
+
+    fn refresh(&mut self) {
+        self.bytes = bytes(self.string);
+    }
+}
+
+struct Source {
+    text: RString,
+    // For mutable sources, a frozen alias detects writes without borrowing Ruby storage.
+    // A frozen source needs only its owned byte snapshot.
+    alias: Option<RString>,
+    bytes: Vec<u8>,
+}
+
+impl Source {
+    fn new(text: RString) -> Result<Self, Error> {
+        let alias = if text.is_frozen() {
+            None
+        } else {
+            Some(frozen_snapshot(text)?)
+        };
+        Ok(Self {
+            text,
+            alias,
+            bytes: bytes(text),
+        })
+    }
+
+    fn refresh_unread(&mut self, unread: usize) -> Result<(), Error> {
+        let Some(alias) = &mut self.alias else {
+            return Ok(());
+        };
+        // Keep the old snapshot when the source length changes. Scanner offsets use it.
+        // Shared storage means the bytes are unchanged: Ruby must detach before a write.
+        if self.text.len() != self.bytes.len() || shares_storage(self.text, *alias) {
+            return Ok(());
+        }
+        let current = bytes(self.text);
+        // Refresh unread bytes only. The renderer already owns the emitted prefix.
+        self.bytes[unread..].copy_from_slice(&current[unread..]);
+        *alias = frozen_snapshot(self.text)?;
+        Ok(())
+    }
+}
+
 struct Arguments {
     text: RString,
     attrs: Option<RString>,
-    tags: Option<RArray>,
-    tag_snapshot: Vec<Vec<u8>>,
+    tags: SkipTags,
     mode: Mode,
     flags: u32,
 }
@@ -137,18 +251,14 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
     }
     // Keep a Ruby array, not `Vec<Value>`, so GC marks original tags after callbacks.
     let tags = if skip.is_nil() {
-        None
+        SkipTags::Default
     } else {
         check_type(skip, ruby_value_type::RUBY_T_ARRAY)?;
         let array = RArray::from_value(skip).unwrap();
         // `dup` allocates in Ruby. Catch its exceptions before Rust unwinds.
         let raw = protect(|| array.dup().as_raw())?;
         // SAFETY: Ruby returned an array. Root it on this stack before another call.
-        Some(RArray::from_value(unsafe { Value::from_raw(raw) }).unwrap())
-    };
-    let tag_snapshot = match tags {
-        Some(tags) => tag_bytes(tags)?,
-        None => Vec::new(),
+        SkipTags::custom(RArray::from_value(unsafe { Value::from_raw(raw) }).unwrap())?
     };
     let flags = get(4);
     let flags = if flags.is_nil() {
@@ -176,7 +286,6 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
         text,
         attrs,
         tags,
-        tag_snapshot,
         mode,
         flags,
     })
@@ -184,19 +293,10 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
 
 fn without_callback(args: &Arguments) -> Option<Vec<u8>> {
     let input = bytes(args.text);
-    let attributes = args.attrs.map(bytes);
-    let attributes = attributes.as_deref().map(|a| &a[trim_start(a)..]);
-    if args.tags.is_none() {
-        rinku_core::auto_link(&input, args.mode, args.flags, attributes, DEFAULT_SKIP_TAGS)
-    } else {
-        rinku_core::auto_link(
-            &input,
-            args.mode,
-            args.flags,
-            attributes,
-            &args.tag_snapshot,
-        )
-    }
+    let attributes = args.attrs.map(Attributes::new);
+    let attributes = attributes.as_ref().map(Attributes::current);
+    args.tags
+        .auto_link(&input, args.mode, args.flags, attributes)
 }
 
 fn frozen_snapshot(text: RString) -> Result<RString, Error> {
@@ -219,68 +319,28 @@ fn shares_storage(text: RString, snapshot: RString) -> bool {
     }
 }
 
-fn refresh_source(
-    text: RString,
-    snapshot: &mut RString,
-    input: &mut [u8],
-    unread: usize,
-) -> Result<(), Error> {
-    // Keep the old snapshot when the source length changes. Scanner offsets use it.
-    // Shared storage means the bytes are unchanged: Ruby must detach before a write.
-    if text.len() != input.len() || shares_storage(text, *snapshot) {
-        return Ok(());
-    }
-    let current = bytes(text);
-    // Refresh unread bytes only. The renderer already owns the emitted prefix.
-    input[unread..].copy_from_slice(&current[unread..]);
-    *snapshot = frozen_snapshot(text)?;
-    Ok(())
-}
-
 fn with_callback(
     ruby: &Ruby,
     args: &mut Arguments,
     block: magnus::block::Proc,
 ) -> Result<Option<Vec<u8>>, Error> {
     let encoding = args.text.enc_get();
-    let mut attributes = args.attrs.map(bytes);
-    let attr_start = attributes.as_deref().map_or(0, trim_start);
-    // For mutable sources, use a frozen alias to detect writes without borrowing Ruby storage.
-    // A frozen source needs only its owned byte snapshot.
-    let mut source_snapshot = if args.text.is_frozen() {
-        None
-    } else {
-        Some(frozen_snapshot(args.text)?)
-    };
-    let mut input = bytes(args.text);
+    let mut attributes = args.attrs.map(Attributes::new);
+    let mut source = Source::new(args.text)?;
     let mut scanner = Scanner::new(args.mode, args.flags);
     let mut renderer = Renderer::default();
-    while let Some(link) = if args.tags.is_none() {
-        scanner.next(&input, DEFAULT_SKIP_TAGS)
-    } else {
-        scanner.next(&input, &args.tag_snapshot)
-    } {
-        renderer.start_link(
-            &input,
-            &link,
-            attributes.as_deref().map(|a| &a[attr_start.min(a.len())..]),
-        );
-        let rendered = call_link(ruby, block, &input[link.range.clone()], encoding)?;
-        renderer.end_link(&rendered);
-        if let Some(snapshot) = &mut source_snapshot {
-            refresh_source(args.text, snapshot, &mut input, link.range.end)?;
+    while let Some(link) = args.tags.next(&mut scanner, &source.bytes) {
+        let label = call_link(ruby, block, &source.bytes[link.range.clone()], encoding)?;
+        // Render with the snapshots the callback received. Its edits affect only later links.
+        let attrs = attributes.as_ref().map(Attributes::current);
+        renderer.link(&source.bytes, &link, attrs, &label);
+        source.refresh_unread(link.range.end)?;
+        if let Some(attributes) = &mut attributes {
+            attributes.refresh();
         }
-        if let (Some(attrs), Some(snapshot)) = (args.attrs, &mut attributes) {
-            *snapshot = bytes(attrs);
-        }
-        if let Some(tags) = args.tags {
-            // Treat a NUL added to a tag as the C-string terminator, as C does.
-            for (i, snapshot) in args.tag_snapshot.iter_mut().enumerate() {
-                *snapshot = bytes(tags.entry::<RString>(i as isize)?);
-            }
-        }
+        args.tags.refresh()?;
     }
-    Ok(renderer.finish(&input))
+    Ok(renderer.finish(&source.bytes))
 }
 
 fn auto_link(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Value, Error> {

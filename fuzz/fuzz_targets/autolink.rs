@@ -1,14 +1,21 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
-use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Scanner, auto_link, link_with};
+use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Renderer, Scanner, auto_link};
 
-fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRef<[u8]>]) {
+fn check_mutating_scanner(
+    data: &[u8],
+    mode: Mode,
+    flags: u32,
+    attributes: Option<&[u8]>,
+    tags: &[impl AsRef<[u8]>],
+) {
     // Add known links so arbitrary fuzz data still exercises a successful scan.
     let mut input = b"http://seed.com a@seed.com ".to_vec();
     input.extend_from_slice(data);
     input.extend_from_slice(b" <pre>www.a.com</pre> http://b.com a@b.com");
     let length = input.len();
     let mut scanner = Scanner::new(mode, flags);
+    let mut renderer = Renderer::default();
     let mut end = 0;
     let mut calls = 0;
     while let Some(link) = scanner.next(&input, tags) {
@@ -18,6 +25,7 @@ fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRe
         assert!(link.range.end > link.range.start);
         assert!(link.range.end <= length);
         end = link.range.end;
+        renderer.link(&input, &link, attributes, &data[..data.len().min(calls)]);
 
         // Change only unread bytes. Keep the input length fixed so offsets stay valid.
         // Let the fuzzer choose the replacement bytes and their start position.
@@ -31,6 +39,9 @@ fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRe
         assert_eq!(input.len(), length);
     }
     assert!(scanner.next(&input, tags).is_none());
+    // `finish` accepts a shorter final snapshot and truncates the suffix.
+    input.truncate(data.len() % (length + 1));
+    assert_eq!(renderer.finish(&input).is_some(), calls > 0);
 }
 
 fuzz_target!(|data: &[u8]| {
@@ -54,18 +65,15 @@ fuzz_target!(|data: &[u8]| {
     for mode in [Mode::All, Mode::Urls, Mode::Emails] {
         for flags in [0, 1] {
             for tags in [DEFAULT_SKIP_TAGS, custom_tags.as_slice()] {
+                let scanned = Scanner::new(mode, flags).next(data, tags).is_some();
                 for attributes in [
                     None,
                     Some(b"rel=x".as_slice()),
                     Some(attribute_bytes),
                     Some(quoted_nul_attributes.as_slice()),
                 ] {
-                    let ordinary = auto_link(data, mode, flags, attributes, tags);
-                    let identity = link_with(data, mode, flags, attributes, tags, |s| {
-                        Ok::<_, std::convert::Infallible>(s.to_vec())
-                    })
-                    .unwrap();
-                    assert_eq!(identity, ordinary);
+                    let rendered = auto_link(data, mode, flags, attributes, tags);
+                    assert_eq!(rendered.is_some(), scanned);
                 }
                 let mut scanner = Scanner::new(mode, flags);
                 let mut end = 0;
@@ -75,8 +83,8 @@ fuzz_target!(|data: &[u8]| {
                     assert!(link.range.end <= data.len());
                     end = link.range.end;
                 }
-                check_mutating_scanner(data, mode, flags, tags);
-                let _ = link_with(data, mode, flags, None, tags, |_| Err::<Vec<u8>, _>(()));
+                let attributes = Some(quoted_nul_attributes.as_slice());
+                check_mutating_scanner(data, mode, flags, attributes, tags);
             }
         }
     }

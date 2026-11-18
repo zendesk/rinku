@@ -10,11 +10,11 @@ ordinary bytes and does not read past the input.
 
 The public `Scanner` and `Renderer` APIs use byte offsets. Keep the input length
 unchanged during a scan. You can change unread bytes between calls. The scanner
-offset only moves forward. For each link, call
-`start_link` once, then call `end_link` once. Pass `start_link` the input
-snapshot that the scanner used for that link. Call `finish` once with the latest
-input snapshot. If the final snapshot is shorter, `finish` truncates the output
-suffix.
+offset only moves forward. Call `Renderer::link` once for each link, with the
+input snapshot that the scanner used for that link and the label to insert.
+Call `finish` once with the latest input snapshot. If the final snapshot is
+shorter, `finish` truncates the output suffix. The core is an internal crate of
+the gem and is not published separately.
 
 The core preserves these C rules:
 

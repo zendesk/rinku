@@ -8,9 +8,9 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    /// Emit the prefix and opening anchor using the snapshot that produced `link`.
-    /// Links must be in order and non-overlapping. Pair each call with one [`Self::end_link`].
-    pub fn start_link(&mut self, input: &[u8], link: &Link, attributes: Option<&[u8]>) {
+    /// Emit the prefix, an anchor for `link`, and its unescaped `label`.
+    /// Pass the snapshot that produced `link`. Links must be in order and non-overlapping.
+    pub fn link(&mut self, input: &[u8], link: &Link, attributes: Option<&[u8]>, label: &[u8]) {
         let out = self
             .output
             .get_or_insert_with(|| Vec::with_capacity(input.len()));
@@ -38,19 +38,13 @@ impl Renderer {
         } else {
             out.extend_from_slice(b"\">");
         }
+        out.extend_from_slice(label);
+        out.extend_from_slice(b"</a>");
         self.copied = link.range.end;
     }
 
-    /// Append the unescaped label and close the anchor started by [`Self::start_link`].
-    pub fn end_link(&mut self, text: &[u8]) {
-        if let Some(out) = &mut self.output {
-            out.extend_from_slice(text);
-            out.extend_from_slice(b"</a>");
-        }
-    }
-
     /// Append the remaining bytes from the latest snapshot; a shorter input truncates the suffix.
-    /// Return `None` if no link was started.
+    /// Return `None` if no link was rendered.
     pub fn finish(mut self, input: &[u8]) -> Option<Vec<u8>> {
         if let Some(out) = &mut self.output {
             out.extend_from_slice(&input[self.copied.min(input.len())..]);
