@@ -28,7 +28,7 @@ Do not normalize these rules. The core has one dependency: `memchr` 2.8.3.
 `memchr` provides a safe byte-search API. The scanner calls it on 256-byte
 chunks. This prevents each lookahead from scanning the full unread suffix.
 
-`ext/rinku` pins Magnus 0.9.3 and rb-sys 0.9.130. Rust 1.85 is the minimum
+`ext/rinku` pins Magnus 0.9.3 and rb-sys 0.9.130. Rust 1.100 is the minimum
 supported compiler. CI checks this version. The binding checks argument types
 and validation order before parsing. Small protected rb-sys calls preserve
 Ruby's exact `Check_Type`, `FIX2INT`, and `StringValueCStr` errors.
@@ -160,10 +160,10 @@ baseline.
 ```sh
 bundle exec rake test gc_stress
 cargo test -p rinku-core --locked
-rustup component add --toolchain nightly-2026-10-01 miri
-cargo +nightly-2026-10-01 miri test -p rinku-core --locked
+rustup component add --toolchain nightly-2026-11-18 miri
+cargo +nightly-2026-11-18 miri test -p rinku-core --locked
 cargo install cargo-fuzz --version 0.13.2 --locked
-cargo +nightly-2026-10-01 fuzz run autolink -- -dict=fuzz/autolink.dict -max_total_time=60 -max_len=16384
+cargo +nightly-2026-11-18 fuzz run autolink -- -dict=fuzz/autolink.dict -max_total_time=60 -max_len=16384
 ruby tools/package_smoke.rb
 ```
 
@@ -198,7 +198,7 @@ Current local validation includes:
 
 * Ruby tests and 1,075 differential observations;
 * optimized garbage-collector stress and compaction;
-* Rust tests, Clippy, formatting, and Rust 1.85 compilation;
+* Rust tests, Clippy, formatting, and Rust 1.100 compilation;
 * pinned Miri and bounded fuzzing;
 * source-gem loading with ActionView on Ruby 3.3, 3.4, and 4.0.
 

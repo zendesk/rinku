@@ -12,7 +12,7 @@ gem install zendesk-rinku --pre
 ```
 
 Version 2.0 requires **CRuby 3.3 or later**. A source build requires Rust and
-Cargo **1.85 or later**. It also requires Ruby development headers, a C/C++
+Cargo **1.100 or later**. It also requires Ruby development headers, a C/C++
 compiler, `make`, and libclang. The `rb-sys` binding generator uses libclang.
 Install Rust with [rustup](https://rustup.rs/). On Debian or Ubuntu, install
 `build-essential`, `ruby-dev`, and `libclang-dev`. On macOS, install the Xcode
@@ -116,8 +116,8 @@ bundle exec rake test gc_stress
 cargo test -p rinku-core --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
-rustup component add --toolchain nightly-2026-10-01 miri
-cargo +nightly-2026-10-01 miri test -p rinku-core --locked
+rustup component add --toolchain nightly-2026-11-18 miri
+cargo +nightly-2026-11-18 miri test -p rinku-core --locked
 ruby tools/package_smoke.rb
 ```
 

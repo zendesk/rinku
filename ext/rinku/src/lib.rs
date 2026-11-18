@@ -39,6 +39,11 @@ fn check_type(value: Value, kind: ruby_value_type) -> Result<(), Error> {
     Ok(())
 }
 
+fn checked_string(value: Value) -> Result<RString, Error> {
+    check_type(value, ruby_value_type::RUBY_T_STRING)?;
+    Ok(RString::from_value(value).expect("checked Ruby string type"))
+}
+
 fn bytes(string: RString) -> Vec<u8> {
     string.to_bytes().into()
 }
@@ -56,15 +61,15 @@ fn ruby_string(ruby: &Ruby, bytes: &[u8], encoding: Index) -> Result<RString, Er
 fn call_link(
     ruby: &Ruby,
     block: magnus::block::Proc,
-    bytes: &[u8],
+    link_text: &[u8],
     encoding: Index,
-) -> Result<Value, Error> {
+) -> Result<Vec<u8>, Error> {
     let call = LazyId::get_inner_with(&CALL, ruby);
     // Build the argument and call the Proc in one protected frame.
     // Two Magnus calls would need two frames per link.
-    // Captures are references or `Copy` handles. `bytes` points to Rust-owned memory.
+    // Captures are references or `Copy` handles. `link_text` points to Rust-owned memory.
     let raw = protect(|| {
-        let argument = ruby.enc_str_new(bytes, encoding);
+        let argument = ruby.enc_str_new(link_text, encoding);
         let arguments = [argument.as_raw()];
         // SAFETY: The GVL is held. Ruby roots `block` and `arguments` during the call and GC.
         // The closure has no Rust values with destructors. `protect` catches allocation errors,
@@ -72,15 +77,14 @@ fn call_link(
         unsafe { rb_sys::rb_funcallv(block.as_raw(), call.as_raw(), 1, arguments.as_ptr()) }
     })?;
     // SAFETY: Ruby returned a valid value. Root it on this stack before another call.
-    Ok(unsafe { Value::from_raw(raw) })
+    let result = unsafe { Value::from_raw(raw) };
+    Ok(bytes(checked_string(result)?))
 }
 
 fn tag_bytes(tags: RArray) -> Result<Vec<Vec<u8>>, Error> {
     let mut result = Vec::with_capacity(tags.len());
     for i in 0..tags.len() {
-        let tag: Value = tags.entry(i as isize)?;
-        check_type(tag, ruby_value_type::RUBY_T_STRING)?;
-        let tag = RString::from_value(tag).unwrap();
+        let tag = checked_string(tags.entry(i as isize)?)?;
         // Use `StringValueCStr` to match C's encoding and NUL checks. Do not coerce the value.
         // SAFETY: The Ruby array and this stack root `tag`. The closure has no Rust values
         // that a Ruby longjmp could skip.
@@ -111,18 +115,17 @@ fn validate_arguments(ruby: &Ruby, receiver: Value, args: &[Value]) -> Result<Ar
     ruby.check_arity(args.len(), 1..=5)?;
     let nil = ruby.qnil().as_value();
     let get = |i| args.get(i).copied().unwrap_or(nil);
-    let text = get(0);
-    check_type(text, ruby_value_type::RUBY_T_STRING)?;
-    let text = RString::from_value(text).unwrap();
+    let text = checked_string(get(0))?;
     let mode = get(1);
     if !mode.is_nil() {
         check_type(mode, ruby_value_type::RUBY_T_SYMBOL)?;
     }
     let attrs = get(2);
-    if !attrs.is_nil() {
-        check_type(attrs, ruby_value_type::RUBY_T_STRING)?;
-    }
-    let attrs = RString::from_value(attrs);
+    let attrs = if attrs.is_nil() {
+        None
+    } else {
+        Some(checked_string(attrs)?)
+    };
     let mut skip = get(3);
     if skip.is_nil() {
         let id = LazyId::get_inner_with(&SKIP_TAGS, ruby);
@@ -262,9 +265,7 @@ fn with_callback(
             &link,
             attributes.as_deref().map(|a| &a[attr_start.min(a.len())..]),
         );
-        let result = call_link(ruby, block, &input[link.range.clone()], encoding)?;
-        check_type(result, ruby_value_type::RUBY_T_STRING)?;
-        let rendered = bytes(RString::from_value(result).unwrap());
+        let rendered = call_link(ruby, block, &input[link.range.clone()], encoding)?;
         renderer.end_link(&rendered);
         if let Some(snapshot) = &mut source_snapshot {
             refresh_source(args.text, snapshot, &mut input, link.range.end)?;

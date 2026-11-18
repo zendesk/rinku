@@ -28,61 +28,61 @@ pub struct Link {
 /// Stores byte offsets, not pointers, so callers can change unread bytes between scans.
 /// Keep the input length unchanged so the offsets remain valid.
 pub struct Scanner {
-    end: usize,
-    last_link: usize,
+    cursor: usize,
+    last_link_end: usize,
     mode: Mode,
-    flags: u32,
+    short_domains: bool,
 }
 
 impl Scanner {
     pub fn new(mode: Mode, flags: u32) -> Self {
         Self {
-            end: 0,
-            last_link: 0,
+            cursor: 0,
+            last_link_end: 0,
             mode,
-            flags,
+            short_domains: flags & SHORT_DOMAINS != 0,
         }
     }
 
     pub fn next(&mut self, input: &[u8], tags: &[impl AsRef<[u8]>]) -> Option<Link> {
-        while self.end < input.len() {
-            let Some(offset) = self.next_active(&input[self.end..]) else {
-                self.end = input.len();
+        while self.cursor < input.len() {
+            let Some(offset) = self.next_active(&input[self.cursor..]) else {
+                self.cursor = input.len();
                 return None;
             };
-            self.end += offset;
-            let at = self.end;
+            self.cursor += offset;
+            let at = self.cursor;
             let parsed = match input[at] {
                 b'<' => {
-                    self.end += crate::html::skip_tag(&input[at..], tags);
+                    self.cursor += crate::html::skip_tag(&input[at..], tags);
                     continue;
                 }
-                b'w' | b'W' => match www(input, at, self.last_link) {
+                b'w' | b'W' => match www(input, at, self.last_link_end) {
                     Ok(range) => Some(Link {
                         range,
                         kind: Kind::Www,
                     }),
                     Err(next) => {
-                        self.end = next;
+                        self.cursor = next;
                         continue;
                     }
                 },
-                b'@' => email(input, at, self.last_link).map(|range| Link {
+                b'@' => email(input, at, self.last_link_end).map(|range| Link {
                     range,
                     kind: Kind::Email,
                 }),
-                b':' => url(input, at, self.last_link, self.flags).map(|range| Link {
+                b':' => url(input, at, self.last_link_end, self.short_domains).map(|range| Link {
                     range,
                     kind: Kind::Url,
                 }),
                 _ => unreachable!("next_active only returns active bytes"),
             };
             if let Some(link) = parsed {
-                self.end = link.range.end;
-                self.last_link = self.end;
+                self.cursor = link.range.end;
+                self.last_link_end = self.cursor;
                 return Some(link);
             }
-            self.end += 1;
+            self.cursor += 1;
         }
         None
     }
@@ -113,7 +113,7 @@ impl Scanner {
 }
 
 pub(crate) fn space(c: u8) -> bool {
-    // Match Ruby's `rb_isspace`, not Rust's broader ASCII whitespace set.
+    // Match Ruby's `rb_isspace`, including vertical tab (unlike `is_ascii_whitespace`).
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
 }
 
@@ -292,7 +292,7 @@ fn email(input: &[u8], at: usize, last: usize) -> Option<Range<usize>> {
     (end > 0).then_some(start..at + end)
 }
 
-fn url(input: &[u8], at: usize, last: usize, flags: u32) -> Option<Range<usize>> {
+fn url(input: &[u8], at: usize, last: usize, short_domains: bool) -> Option<Range<usize>> {
     let data = &input[at..];
     if data.len() < 4 || !data.starts_with(b"://") {
         return None;
@@ -309,7 +309,7 @@ fn url(input: &[u8], at: usize, last: usize, flags: u32) -> Option<Range<usize>>
     {
         return None;
     }
-    let len = scan_domain(&data[3..], flags & SHORT_DOMAINS != 0);
+    let len = scan_domain(&data[3..], short_domains);
     if len == 0 {
         return None;
     }
