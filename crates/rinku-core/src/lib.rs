@@ -4,7 +4,7 @@ mod autolink;
 mod html;
 mod render;
 
-pub use autolink::{Kind, Link, Mode, Scanner, SHORT_DOMAINS};
+pub use autolink::{Kind, Link, Mode, SHORT_DOMAINS, Scanner};
 pub use render::Renderer;
 
 pub const DEFAULT_SKIP_TAGS: &[&[u8]] = &[b"a", b"pre", b"code", b"kbd", b"script"];

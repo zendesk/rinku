@@ -145,11 +145,7 @@ fn scan_domain(data: &[u8], short: bool) -> usize {
         }
         i += 1;
     }
-    if short || dots > 0 {
-        i
-    } else {
-        0
-    }
+    if short || dots > 0 { i } else { 0 }
 }
 
 fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
@@ -201,11 +197,7 @@ fn trim_link_end_once(data: &[u8], mut end: usize) -> usize {
             closing += 1;
         }
     }
-    if closing != opening {
-        end - 1
-    } else {
-        end
-    }
+    if closing != opening { end - 1 } else { end }
 }
 
 fn trim_link_end_bounded(data: &[u8], mut end: usize) -> usize {

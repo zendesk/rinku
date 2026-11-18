@@ -1,6 +1,6 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
-use rinku_core::{auto_link, link_with, Mode, Scanner, DEFAULT_SKIP_TAGS};
+use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Scanner, auto_link, link_with};
 
 fn check_mutating_scanner(data: &[u8], mode: Mode, flags: u32, tags: &[impl AsRef<[u8]>]) {
     // Add known links so arbitrary fuzz data still exercises a successful scan.

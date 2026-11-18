@@ -1,4 +1,4 @@
-use rinku_core::{auto_link, link_with, Mode, Scanner, DEFAULT_SKIP_TAGS, SHORT_DOMAINS};
+use rinku_core::{DEFAULT_SKIP_TAGS, Mode, SHORT_DOMAINS, Scanner, auto_link, link_with};
 
 fn link(input: &[u8]) -> Vec<u8> {
     auto_link(input, Mode::All, 0, None, DEFAULT_SKIP_TAGS).unwrap_or_else(|| input.to_vec())
@@ -48,11 +48,7 @@ fn rendering_and_callback_errors() {
         DEFAULT_SKIP_TAGS,
         |s| {
             calls += 1;
-            if calls == 2 {
-                Err(2)
-            } else {
-                Ok(s.to_vec())
-            }
+            if calls == 2 { Err(2) } else { Ok(s.to_vec()) }
         },
     );
     assert_eq!(result, Err(2));

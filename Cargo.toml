@@ -1,11 +1,11 @@
 [workspace]
 members = ["crates/rinku-core", "ext/rinku"]
 default-members = ["crates/rinku-core"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
-edition = "2021"
-rust-version = "1.85"
+edition = "2024"
+rust-version = "1.100"
 license = "ISC"
 
 [profile.release]

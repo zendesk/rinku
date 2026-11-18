@@ -2,15 +2,15 @@
 #![deny(clippy::disallowed_methods)]
 
 use magnus::{
+    Error, RArray, RString, Ruby, Symbol, Value,
     encoding::{EncodingCapable, Index},
     method,
     prelude::*,
-    rb_sys::{protect, AsRawId, AsRawValue, FromRawValue},
+    rb_sys::{AsRawId, AsRawValue, FromRawValue, protect},
     value::{Fixnum, Id, LazyId},
-    Error, RArray, RString, Ruby, Symbol, Value,
 };
 use rb_sys::ruby_value_type;
-use rinku_core::{Mode, Renderer, Scanner, DEFAULT_SKIP_TAGS};
+use rinku_core::{DEFAULT_SKIP_TAGS, Mode, Renderer, Scanner};
 
 // These IDs are interned Ruby symbols, not unmarked heap values.
 static SKIP_TAGS: LazyId = LazyId::new("@skip_tags");
