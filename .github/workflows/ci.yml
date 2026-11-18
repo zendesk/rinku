@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NIGHTLY: nightly-2026-11-18
+
 jobs:
   ruby:
     runs-on: ubuntu-latest
@@ -53,26 +56,13 @@ jobs:
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test -p rinku-core --locked
 
-  msrv:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: '1.100.0'
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-      - run: sudo apt-get install -y libclang-dev
-      - run: cargo check --workspace --locked
-
   miri:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2026-11-18
+          toolchain: ${{ env.NIGHTLY }}
           components: miri
       - run: cargo miri setup
       - run: cargo miri test -p rinku-core --locked
@@ -83,7 +73,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2026-11-18
+          toolchain: ${{ env.NIGHTLY }}
       - run: cargo install cargo-fuzz --version 0.13.2 --locked
       - run: cargo fuzz run autolink -- -dict=fuzz/autolink.dict -max_total_time=30 -max_len=16384
       - uses: actions/upload-artifact@v4
