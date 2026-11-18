@@ -12,27 +12,13 @@ Gem::Specification.new do |s|
   s.homepage = 'https://github.com/zendesk/rinku'
   s.authors = ["Shajith Chacko", "Jonathan Cheatham", "Matt Barker"]
   s.license = "ISC"
-  s.files = %w[
-    COPYING
-    README.markdown
-    docs/rust-rewrite.md
-    Rakefile
-    Cargo.toml
-    Cargo.lock
-    crates/rinku-core/Cargo.toml
-    crates/rinku-core/src/lib.rs
-    crates/rinku-core/src/autolink.rs
-    crates/rinku-core/src/html.rs
-    crates/rinku-core/src/render.rs
-    crates/rinku-core/tests/core.rs
-    ext/rinku/Cargo.toml
-    ext/rinku/src/lib.rs
+  s.files = Dir.glob(%w[
+    COPYING README.markdown Rakefile rinku.gemspec
+    Cargo.{toml,lock}
+    lib/*.rb
+    {crates/rinku-core,ext/rinku}/{Cargo.toml,src/**/*.rs}
     ext/rinku/extconf.rb
-    lib/rinku.rb
-    lib/rails_rinku.rb
-    lib/version.rb
-    rinku.gemspec
-  ]
+  ], base: __dir__).sort
   s.extensions = ["ext/rinku/extconf.rb"]
   s.required_ruby_version = ">= 3.3"
   s.add_dependency 'rb_sys', '= 0.9.130'
